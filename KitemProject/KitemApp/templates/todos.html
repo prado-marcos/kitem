@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista de Tarefas{% endblock %}
+
+{% block content %}
+    <h2>Lista de Tarefas</h2>
+    <ul class="list-group">
+        {% for todo in todos %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <h5>{{ todo.title }}</h5>
+                    <p>{{ todo.description }}</p>
+                    <small>Vence em: {{ todo.due_date }}</small>
+                </div>
+              
+            </li>
+        {% empty %}
+            <li class="list-group-item">Nenhuma tarefa encontrada.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
