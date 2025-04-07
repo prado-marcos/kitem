@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}Atualizar Ingrediente{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Atualizar Ingrediente</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="nome" class="form-label">Nome do Ingrediente</label>
+            <input type="text" class="form-control" id="nome" name="nome" value="{{ ingrediente.nome }}" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+        <a href="{% url 'ingredientes' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}
