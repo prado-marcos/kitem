@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Novo Ingrediente{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Adicionar Novo Ingrediente</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="nome" class="form-label">Nome do Ingrediente</label>
+            <input type="text" class="form-control" id="nome" name="nome" placeholder="Digite o nome do ingrediente" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+    </form>
+</div>
+{% endblock %}
