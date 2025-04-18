@@ -29,7 +29,8 @@ def api_root(request):
     return Response({
         "message": "Seja bem-vindo à API do kitem",
         "endpoints": {
-            "ingredientes": "/api/ingredientes/"
+            "ingredientes": "/api/ingredientes/",
+            "ingrediente": "/api/ingredientes/<int:pk>/"
         }
     })
 
