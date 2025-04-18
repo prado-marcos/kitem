@@ -86,9 +86,25 @@ WSGI_APPLICATION = "setup.wsgi.application"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    "default": config(
-        "DATABASE_URL", default="sqlite:///" + str(BASE_DIR / "db.sqlite3"), cast=db_url
-    )
+
+    'default': {
+
+        #'ENGINE': 'django.db.backends.sqlite3',
+        #'NAME': BASE_DIR / 'db.sqlite3',
+
+        'ENGINE': 'django.db.backends.postgresql',
+
+        'NAME': 'postgres',
+
+        'USER': 'postgres',
+
+        'PASSWORD': 'botaernestoasterixico',
+
+        'HOST': 'glaringly-adored-billfish.data-1.use1.tembo.io',
+
+        'PORT': '5432',
+
+    }
 }
 
 
