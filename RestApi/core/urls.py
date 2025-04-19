@@ -1,9 +1,18 @@
 from django.urls import path
 from . import views_api  # Importa as views do arquivo views_api.py
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
     # API Root (opcional, pode ser removido se não for necessário)
     path('', views_api.api_root, name='api-root'),
+
+    # rota de auth
+    path('auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    # URLs para Usuários
+    path('usuarios/', views_api.UsuarioListCreateAPIView.as_view(), name='usuario-list-create'),
+    path('usuarios/<int:pk>/', views_api.UsuarioRetrieveUpdateDestroyAPIView.as_view(), name='usuario-detail'),
 
     # URLs para Ingredientes
     path('ingredientes/', views_api.IngredienteListCreateAPIView.as_view(), name='ingrediente-list-create'),

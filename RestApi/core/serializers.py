@@ -1,5 +1,48 @@
 from rest_framework import serializers
 from .models import Ingrediente, Receita, ReceitaIngrediente, Favorito, ListaCompras, ListaComprasIngrediente
+from django.contrib.auth.models import User as Usuario
+
+from django.contrib.auth import get_user_model
+
+Usuario = get_user_model()
+
+# Serializer para o modelo Usuario (Django User)
+class UsuarioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Usuario
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'password')
+        extra_kwargs = {
+            'password': {'write_only': True},
+            'id': {'read_only': True},
+            'username': {
+                'required': True,
+                'error_messages': {
+                    'blank': 'O nome de usuário não pode estar vazio.',
+                    'required': 'O nome de usuário é obrigatório.',
+                    'max_length': 'O nome de usuário não pode ter mais de 150 caracteres.'
+                }
+            }
+        }
+
+    def create(self, validated_data):
+        # Removendo a senha do validated_data para tratá-la separadamente
+        password = validated_data.pop('password')
+        
+        # Criando o usuário (sem definir a senha ainda)
+        user = Usuario(**validated_data)
+        
+        # Definindo a senha corretamente (hash)
+        user.set_password(password)
+
+        # Garantindo que seja um usuário comum
+        user.is_staff = False
+        user.is_superuser = False
+        user.is_active = True
+
+        # Salvando no banco
+        user.save()
+        return user
+
 
 # Serializer para o modelo Ingrediente
 class IngredienteSerializer(serializers.ModelSerializer):

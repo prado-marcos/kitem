@@ -14,6 +14,8 @@
 transformar os strings de conexão com banco de dados no padrão de dicionario usado pelo django
 ### pip install psycopg2
 para trocar de database para postgresql
+### pip install djangorestframework-simplejwt
+autenticação 
 # primeira vez rodando 
     python manage.py migrate
          ajuda a vida do desenvolvedor Django na hora de criar a estrutura do banco de dados da nossa aplicação

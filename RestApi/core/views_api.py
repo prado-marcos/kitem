@@ -7,10 +7,28 @@ from .serializers import (
     FavoritoSerializer,
     ListaComprasSerializer,
     ListaComprasIngredienteSerializer,
+    UsuarioSerializer,
 )
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from django.contrib.auth.models import User as Usuario
+
+class UsuarioListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Usuario.objects.all()
+    serializer_class = UsuarioSerializer
+
+class UsuarioRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Usuario.objects.all()
+    serializer_class = UsuarioSerializer
+
+    def get_object(self):
+        try:
+            return Usuario.objects.get(pk=self.kwargs['pk'])
+        except Usuario.DoesNotExist:
+            raise NotFound(detail="Usuário não encontrado.")
+        except Exception as e:
+            raise NotFound(detail=f"Erro inesperado: {str(e)}")
 
 # Views para a API de Ingredientes
 class IngredienteListCreateAPIView(generics.ListCreateAPIView):
@@ -111,13 +129,27 @@ class ListaComprasIngredienteRetrieveUpdateDestroyAPIView(generics.RetrieveUpdat
         except Exception as e:
             raise NotFound(detail=f"Erro inesperado: {str(e)}")
 
+
 @api_view(['GET'])
 def api_root(request):
     return Response({
-        "message": "Seja bem-vindo à API do kitem",
+        "message": "Seja bem-vindo à API de testes do kitem",
         "endpoints": {
+            "auth": "/api/auth/login/",
+            "refresh": "/api/auth/refresh/",
+            "usuarios": "/api/usuarios/",
+            "usuario": "/api/usuarios/<int:pk>/",
             "ingredientes": "/api/ingredientes/",
-            "ingrediente": "/api/ingredientes/<int:pk>/"
+            "ingrediente": "/api/ingredientes/<int:pk>/",
+            "receitas": "/api/receitas/",
+            "receita": "/api/receitas/<int:pk>/",
+            "receita_ingredientes": "/api/receitas_ingredientes/",
+            "receita_ingrediente": "/api/receitas_ingredientes/<int:pk>/",
+            "favoritos": "/api/favoritos/",
+            "favorito": "/api/favoritos/<int:pk>/",
+            "listas_compras": "/api/listas_compras/",
+            "lista_compras": "/api/listas_compras/<int:pk>/",
+            "listas_compras_ingredientes": "/api/listas_compras_ingredientes/",
         }
     })
 
