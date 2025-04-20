@@ -1,0 +1,8 @@
+Django==4.2.3  # Versão do Django (ajuste conforme necessário)
+djangorestframework==3.14.0  # Django REST Framework para APIs
+python-decouple==3.8  # Gerenciamento de variáveis de ambiente
+pytz==2023.3  # Suporte a fusos horários
+sqlparse==0.4.4  # Dependência do Django para parsing de SQL
+asgiref==3.7.2  # Dependência do Django para suporte a ASGI
+psycopg2-binary==2.9.6  # Driver para PostgreSQL
+black==23.3.0  # Ferramenta para formatação automática de código Python
