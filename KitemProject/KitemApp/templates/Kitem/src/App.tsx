@@ -1,9 +1,21 @@
-import Home from "./Home";
+import Home from "./pages/Home";
+import Teste from "./pages/Teste";
+import Layout from "./pages/Layout";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-function App() {
+export default function App() {
   return (
-    <Home></Home>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="teste" element={<Teste />} />
+          {/* <Route index element={<Home />} />
+          <Route path="blogs" element={<Blogs />} />
+          <Route path="contact" element={<Contact />} />
+          <Route path="*" element={<NoPage />} /> */}
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
-
-export default App;
