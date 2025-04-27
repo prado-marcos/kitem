@@ -1,0 +1,275 @@
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import bannerImage from "../assets/bannerImage.png";
+import { Search, ChevronUp, ChevronDown } from "lucide-react";
+
+interface FilterProps {
+  label: string;
+  children: React.ReactNode;
+}
+
+interface FilterOptionProps {
+  label: string;
+  name: string;
+  value: string;
+}
+
+interface Recipe {
+  id: number;
+  title: string;
+  imageUrl: string;
+  time: string;
+  rating: number;
+}
+
+interface RecipeCarouselInterface {
+  title: string;
+  subTitle: string;
+}
+
+//Para teste
+const recipes: Recipe[] = [
+  {
+    id: 1,
+    title: "Pasta Carbonara",
+    imageUrl: "/assets/pasta.jpg", // Trocar para seu caminho real
+    time: "30 mins",
+    rating: 4.5,
+  },
+  {
+    id: 2,
+    title: "Salmão Grelhado",
+    imageUrl: "/assets/salmao.jpg",
+    time: "20 mins",
+    rating: 4.8,
+  },
+  {
+    id: 3,
+    title: "Torrada de abacate",
+    imageUrl: "/assets/torrada.jpg",
+    time: "10 mins",
+    rating: 4.7,
+  },
+];
+
+
+export default function Home() {
+  return (
+    <>
+      <Banner />
+    </>
+  );
+}
+
+function Banner() {
+  const [query, setQuery] = useState("");
+  const [toggleAdvancedSearch, setToggleAdvancedSearch] = useState(false);
+
+  function handleSearch() {
+    console.log(query);
+  }
+
+  function handleAdvancedSearch(toggleButton: boolean) {
+    setToggleAdvancedSearch(toggleButton);
+  }
+
+  return (
+    <>
+      <div
+        className="w-full bg-cover py-10 px-6 shadow-lg flex flex-col items-center gap-4"
+        style={{ backgroundImage: `url(${bannerImage})` }}
+      >
+        <h1 className="text-5xl font-bold text-white text-shadow-lg">
+          Encontre a receita perfeita!
+        </h1>
+        <h3 className="text-1xl font-bold text-white text-shadow-lg">
+          Busque por receitas ou por ingredientes que tem em casa
+        </h3>
+        <div className="flex items-center gap-1">
+          <input
+            type="text"
+            placeholder="Buscar..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="bg-white rounded-sm px-2 py-1"
+          />
+          <button
+            onClick={handleSearch}
+            className="bg-gray-300 rounded-sm px-2 py-1 pointer-button"
+            title="Buscar"
+          >
+            <Search className="h-4 w-4 my-1" />
+          </button>
+          <button
+            onClick={() => handleAdvancedSearch(!toggleAdvancedSearch)}
+            className="bg-gray-300 rounded-sm px-2 py-1 pointer-button"
+            title="Busca Avançada"
+          >
+            {toggleAdvancedSearch ? (
+              <ChevronUp className="h-4 w-4 my-1" />
+            ) : (
+              <ChevronDown className="h-4 w-4 my-1" />
+            )}
+          </button>
+        </div>
+      </div>
+      <AnimatePresence>
+        {toggleAdvancedSearch && <AdvancedSearch />}
+      </AnimatePresence>
+      <RecipeCarousel title="Receitas Populares" subTitle="Explore as mais acessadas"/>
+      <RecipeCarousel title="Sugestões de receitas" subTitle="Receitas para te inspirar"/>
+    </>
+  );
+}
+
+function AdvancedSearch() {
+  const [minTime, setMinTime] = useState("");
+
+  function handleMinTimeChange(
+    e: React.ChangeEvent<HTMLInputElement>,
+    setState: React.Dispatch<React.SetStateAction<string>>
+  ) {
+    const value = e.target.value;
+    if (/^\d*$/.test(value) && parseInt(value) > 0) {
+      setState(value);
+    }
+  }
+
+  return (
+    <motion.div
+      className="w-full overflow-hidden bg-gray-300 py-0 px-6 shadow-lg flex flex-col items-center gap-4"
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: "auto", opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.4, ease: "easeInOut" }}
+    >
+      <div className="py-10 flex flex-col gap-5">
+        <Filter label="Restrição Alimentar">
+          <FilterOption label="Vegano" name="restricao" value="vegano" />
+          <FilterOption
+            label="Vegetariano"
+            name="restricao"
+            value="vegetariano"
+          />
+          <FilterOption
+            label="Sem Glúten"
+            name="restricao"
+            value="sem-gluten"
+          />
+          <FilterOption
+            label="Baixa Caloria"
+            name="restricao"
+            value="baixa-caloria"
+          />
+          <FilterOption
+            label="Sem Lactose"
+            name="restricao"
+            value="sem-lactose"
+          />
+        </Filter>
+
+        <Filter label="Tipo">
+          <FilterOption label="Doce" name="tipo" value="doce" />
+          <FilterOption label="Salgado" name="tipo" value="salgado" />
+        </Filter>
+
+        <Filter label="Nível de Dificuldade">
+          <FilterOption label="Fácil" name="dificuldade" value="facil" />
+          <FilterOption label="Médio" name="dificuldade" value="medio" />
+          <FilterOption label="Difícil" name="dificuldade" value="dificil" />
+          <FilterOption
+            label="Master Chef"
+            name="dificuldade"
+            value="master-chef"
+          />
+        </Filter>
+        <Filter label="Tempo de Preparo (em minutos)">
+          <input
+            type="text"
+            value={minTime}
+            onChange={(e) => handleMinTimeChange(e, setMinTime)}
+            className="bg-white w-25 px-1 py-1 rounded"
+          />
+        </Filter>
+      </div>
+    </motion.div>
+  );
+}
+
+function Filter({ label, children }: FilterProps) {
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="font-semibold text-gray-700">{label}</span>
+      <div className="flex flex-wrap gap-2">{children}</div>
+    </div>
+  );
+}
+
+function FilterOption({ label, name, value }: FilterOptionProps) {
+  return (
+    <label className="cursor-pointer">
+      <input type="radio" name={name} value={value} className="peer hidden" />
+      <div className="px-4 py-2 rounded bg-gray-200 peer-checked:bg-gray-500 peer-checked:text-white transition-all">
+        {label}
+      </div>
+    </label>
+  );
+}
+
+function RecipeCarousel({title, subTitle}:RecipeCarouselInterface) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  function handlePrev() {
+    setCurrentIndex((prev) => Math.max(prev - 1, 0));
+  }
+
+  function handleNext() {
+    setCurrentIndex((prev) => Math.min(prev + 1, recipes.length - 1));
+  }
+
+  return (
+    <div className="w-full flex flex-col items-center py-10">
+      <h2 className="text-4xl font-bold mb-2">{title}</h2>
+      <p className="text-gray-600 mb-6">{subTitle}</p>
+
+      <div className="relative w-full max-w-5xl overflow-hidden">
+        <div
+          className="flex transition-transform duration-500"
+          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+        >
+          {recipes.map((recipe) => (
+            <div key={recipe.id} className="min-w-full flex-shrink-0 p-4">
+              <div className="bg-white shadow rounded overflow-hidden">
+                <img
+                  src={recipe.imageUrl}
+                  alt={recipe.title}
+                  className="w-full h-64 object-cover"
+                />
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold">{recipe.title}</h3>
+                  <p className="mt-2 font-bold">{`${recipe.time} | ${recipe.rating} estrelas`}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Botões de navegação */}
+        <button
+          onClick={handlePrev}
+          className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-white p-2 rounded-full shadow hover:bg-gray-100"
+          disabled={currentIndex === 0}
+        >
+          ◀
+        </button>
+        <button
+          onClick={handleNext}
+          className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-white p-2 rounded-full shadow hover:bg-gray-100"
+          disabled={currentIndex === recipes.length - 1}
+        >
+          ▶
+        </button>
+      </div>
+    </div>
+  );
+}
