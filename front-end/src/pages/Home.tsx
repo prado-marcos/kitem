@@ -2,6 +2,12 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import bannerImage from "../assets/bannerImage.png";
 import { Search, ChevronUp, ChevronDown } from "lucide-react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation } from "swiper/modules";
+// @ts-expect-error importe funciona normalmente
+import "swiper/css";
+// @ts-expect-error importe funciona normalmente
+import "swiper/css/navigation";
 
 interface FilterProps {
   label: string;
@@ -22,17 +28,16 @@ interface Recipe {
   rating: number;
 }
 
-interface RecipeCarouselInterface {
+interface RecipeCarousel {
   title: string;
   subTitle: string;
 }
 
-//Para teste
 const recipes: Recipe[] = [
   {
     id: 1,
     title: "Pasta Carbonara",
-    imageUrl: "/assets/pasta.jpg", // Trocar para seu caminho real
+    imageUrl: "/assets/pasta.jpg",
     time: "30 mins",
     rating: 4.5,
   },
@@ -50,8 +55,14 @@ const recipes: Recipe[] = [
     time: "10 mins",
     rating: 4.7,
   },
+  {
+    id: 4,
+    title: "Risoto de Cogumelos",
+    imageUrl: "/assets/risoto.jpg",
+    time: "40 mins",
+    rating: 4.6,
+  },
 ];
-
 
 export default function Home() {
   return (
@@ -116,8 +127,14 @@ function Banner() {
       <AnimatePresence>
         {toggleAdvancedSearch && <AdvancedSearch />}
       </AnimatePresence>
-      <RecipeCarousel title="Receitas Populares" subTitle="Explore as mais acessadas"/>
-      <RecipeCarousel title="Sugestões de receitas" subTitle="Receitas para te inspirar"/>
+      <RecipeCarousel
+        title="Receitas Populares"
+        subTitle="Explore as mais acessadas"
+      />
+      <RecipeCarousel
+        title="Sugestões de receitas"
+        subTitle="Receitas para te inspirar"
+      />
     </>
   );
 }
@@ -216,59 +233,45 @@ function FilterOption({ label, name, value }: FilterOptionProps) {
   );
 }
 
-function RecipeCarousel({title, subTitle}:RecipeCarouselInterface) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  function handlePrev() {
-    setCurrentIndex((prev) => Math.max(prev - 1, 0));
-  }
-
-  function handleNext() {
-    setCurrentIndex((prev) => Math.min(prev + 1, recipes.length - 1));
-  }
-
+function RecipeCarousel({ title, subTitle }: RecipeCarousel) {
   return (
     <div className="w-full flex flex-col items-center py-10">
       <h2 className="text-4xl font-bold mb-2">{title}</h2>
       <p className="text-gray-600 mb-6">{subTitle}</p>
 
-      <div className="relative w-full max-w-5xl overflow-hidden">
-        <div
-          className="flex transition-transform duration-500"
-          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+      <div className="w-full max-w-6xl">
+        <Swiper
+          modules={[Navigation]}
+          navigation
+          spaceBetween={20}
+          slidesPerView={3}
+          breakpoints={{
+            0: { slidesPerView: 1 },
+            640: { slidesPerView: 2 },
+            1024: { slidesPerView: 3 },
+          }}
+          className="pb-8"
         >
           {recipes.map((recipe) => (
-            <div key={recipe.id} className="min-w-full flex-shrink-0 p-4">
+            <SwiperSlide key={recipe.id}>
               <div className="bg-white shadow rounded overflow-hidden">
-                <img
-                  src={recipe.imageUrl}
-                  alt={recipe.title}
-                  className="w-full h-64 object-cover"
-                />
+                <a href="#">
+                  <img
+                    src={recipe.imageUrl}
+                    alt={recipe.title}
+                    className="w-full h-64 object-cover"
+                  />
+                </a>
                 <div className="p-4">
                   <h3 className="text-lg font-semibold">{recipe.title}</h3>
-                  <p className="mt-2 font-bold">{`${recipe.time} | ${recipe.rating} estrelas`}</p>
+                  <p className="mt-2 font-bold">
+                    {recipe.time} | {recipe.rating} estrelas
+                  </p>
                 </div>
               </div>
-            </div>
+            </SwiperSlide>
           ))}
-        </div>
-
-        {/* Botões de navegação */}
-        <button
-          onClick={handlePrev}
-          className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-white p-2 rounded-full shadow hover:bg-gray-100"
-          disabled={currentIndex === 0}
-        >
-          ◀
-        </button>
-        <button
-          onClick={handleNext}
-          className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-white p-2 rounded-full shadow hover:bg-gray-100"
-          disabled={currentIndex === recipes.length - 1}
-        >
-          ▶
-        </button>
+        </Swiper>
       </div>
     </div>
   );

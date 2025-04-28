@@ -1,5 +1,4 @@
 import Home from "./pages/Home";
-import Teste from "./pages/Teste";
 import Layout from "./pages/Layout";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
@@ -9,7 +8,6 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
-          <Route path="teste" element={<Teste />} />
           {/* <Route index element={<Home />} />
           <Route path="blogs" element={<Blogs />} />
           <Route path="contact" element={<Contact />} />
