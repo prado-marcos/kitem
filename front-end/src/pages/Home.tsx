@@ -31,6 +31,7 @@ interface Recipe {
 interface RecipeCarousel {
   title: string;
   subTitle: string;
+  recipes: Recipe[];
 }
 
 const recipes: Recipe[] = [
@@ -130,10 +131,12 @@ function Banner() {
       <RecipeCarousel
         title="Receitas Populares"
         subTitle="Explore as mais acessadas"
+        recipes={recipes}
       />
       <RecipeCarousel
         title="Sugestões de receitas"
         subTitle="Receitas para te inspirar"
+        recipes={recipes}
       />
     </>
   );
@@ -233,7 +236,8 @@ function FilterOption({ label, name, value }: FilterOptionProps) {
   );
 }
 
-function RecipeCarousel({ title, subTitle }: RecipeCarousel) {
+function RecipeCarousel({ title, subTitle, recipes = [] }: RecipeCarousel) {
+// function RecipeCarousel({ title, subTitle, recipes }: RecipeCarousel) {
   return (
     <div className="w-full flex flex-col items-center py-10">
       <h2 className="text-4xl font-bold mb-2">{title}</h2>
