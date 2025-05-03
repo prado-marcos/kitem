@@ -23,18 +23,18 @@ urlpatterns = [
     path('receitas/<int:pk>/', views_api.ReceitaRetrieveUpdateDestroyAPIView.as_view(), name='receita-detail'),
 
     # URLs para ReceitaIngrediente
-    path('receita-ingredientes/', views_api.ReceitaIngredienteListCreateAPIView.as_view(), name='receita-ingrediente-list-create'),
-    path('receita-ingredientes/<int:pk>/', views_api.ReceitaIngredienteRetrieveUpdateDestroyAPIView.as_view(), name='receita-ingrediente-detail'),
+    path('receita_ingredientes/', views_api.ReceitaIngredienteListCreateAPIView.as_view(), name='receita-ingrediente-list-create'),
+    path('receita_ingredientes/<int:pk>/', views_api.ReceitaIngredienteRetrieveUpdateDestroyAPIView.as_view(), name='receita-ingrediente-detail'),
 
     # URLs para Favoritos
     path('favoritos/', views_api.FavoritoListCreateAPIView.as_view(), name='favorito-list-create'),
     path('favoritos/<int:pk>/', views_api.FavoritoRetrieveUpdateDestroyAPIView.as_view(), name='favorito-detail'),
 
     # URLs para Lista de Compras
-    path('listas-compras/', views_api.ListaComprasListCreateAPIView.as_view(), name='lista-compras-list-create'),
-    path('listas-compras/<int:pk>/', views_api.ListaComprasRetrieveUpdateDestroyAPIView.as_view(), name='lista-compras-detail'),
+    path('listas_compras/', views_api.ListaComprasListCreateAPIView.as_view(), name='lista-compras-list-create'),
+    path('listas_compras/<int:pk>/', views_api.ListaComprasRetrieveUpdateDestroyAPIView.as_view(), name='lista-compras-detail'),
 
     # URLs para ListaComprasIngrediente
-    path('listas-compras-ingredientes/', views_api.ListaComprasIngredienteListCreateAPIView.as_view(), name='lista-compras-ingrediente-list-create'),
-    path('listas-compras-ingredientes/<int:pk>/', views_api.ListaComprasIngredienteRetrieveUpdateDestroyAPIView.as_view(), name='lista-compras-ingrediente-detail'),
+    path('listas_compras_ingredientes/', views_api.ListaComprasIngredienteListCreateAPIView.as_view(), name='lista-compras-ingrediente-list-create'),
+    path('listas_compras_ingredientes/<int:pk>/', views_api.ListaComprasIngredienteRetrieveUpdateDestroyAPIView.as_view(), name='lista-compras-ingrediente-detail'),
 ]
