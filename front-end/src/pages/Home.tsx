@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import bannerImage from "../assets/bannerImage.png";
+import homeBanner from "../assets/home_banner.png";
 import { Search, ChevronUp, ChevronDown } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
@@ -27,6 +27,7 @@ interface RecipeProps {
   imageUrl: string;
   time: string;
   rating: number;
+  difficulty: string;
 }
 
 interface RecipeCarouselProps {
@@ -42,6 +43,7 @@ const recipes: RecipeProps[] = [
     imageUrl: "/assets/pasta.jpg",
     time: "30 mins",
     rating: 4.5,
+    difficulty: "Fácil",
   },
   {
     id: 2,
@@ -49,6 +51,7 @@ const recipes: RecipeProps[] = [
     imageUrl: "/assets/salmao.jpg",
     time: "20 mins",
     rating: 4.8,
+    difficulty: "Fácil",
   },
   {
     id: 3,
@@ -56,6 +59,7 @@ const recipes: RecipeProps[] = [
     imageUrl: "/assets/torrada.jpg",
     time: "10 mins",
     rating: 4.7,
+    difficulty: "Fácil",
   },
   {
     id: 4,
@@ -63,18 +67,11 @@ const recipes: RecipeProps[] = [
     imageUrl: "/assets/risoto.jpg",
     time: "40 mins",
     rating: 4.6,
+    difficulty: "Fácil",
   },
 ];
 
 export default function Home() {
-  return (
-    <>
-      <Banner />
-    </>
-  );
-}
-
-function Banner() {
   const [query, setQuery] = useState("");
   const [toggleAdvancedSearch, setToggleAdvancedSearch] = useState(false);
 
@@ -90,7 +87,7 @@ function Banner() {
     <>
       <div
         className="w-full bg-cover py-10 px-6 shadow-lg flex flex-col items-center gap-4"
-        style={{ backgroundImage: `url(${bannerImage})` }}
+        style={{ backgroundImage: `url(${homeBanner})` }}
       >
         <h1 className="text-5xl font-bold text-white text-shadow-lg">
           Encontre a receita perfeita!
@@ -104,7 +101,7 @@ function Banner() {
             placeholder="Buscar..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="bg-white rounded-sm px-2 py-1"
+            className="bg-white rounded-sm px-2 py-1 w-100"
           />
           <Button
             onClick={handleSearch}
@@ -131,9 +128,9 @@ function Banner() {
             variant="contained"
           >
             {toggleAdvancedSearch ? (
-              <ChevronUp className="h-4 w-4 my-1" />
+              <ChevronUp className="size-5" />
             ) : (
-              <ChevronDown className="h-4 w-4 my-1" />
+              <ChevronDown className="size-5" />
             )}
           </Button>
         </div>
@@ -285,8 +282,9 @@ function RecipeCarousel({
                 </a>
                 <div className="p-4">
                   <h3 className="text-lg font-semibold">{recipe.title}</h3>
-                  <p className="mt-2 font-bold">
-                    {recipe.time} | {recipe.rating} estrelas
+                  <p className="mt-2 font-bold">{recipe.rating} estrelas</p>
+                  <p className="mt-2 ">
+                    {recipe.time} | Dificuldade: {recipe.difficulty}
                   </p>
                 </div>
               </div>

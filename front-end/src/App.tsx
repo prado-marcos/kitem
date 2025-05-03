@@ -2,6 +2,12 @@ import Home from "./pages/Home";
 import Receita from "./pages/Recipe";
 import Layout from "./pages/Layout";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
+import UpdateRegister from "./pages/UpdateRegister";
+import UpdatePassword from "./pages/UpdatePassword";
+import RecipeManagement from "./pages/RecipeManagement";
+import RecipeRegister from "./components/RecipeRegister";
+import ShopList from "./pages/ShopList";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 export default function App() {
@@ -26,6 +32,12 @@ export default function App() {
             }
           />
           <Route path="/login" element={<Login></Login>} />
+          <Route path="/register" element={<Register></Register>} />
+          <Route path="/update-register" element={<UpdateRegister></UpdateRegister>} />
+          <Route path="/update-Password" element={<UpdatePassword></UpdatePassword>} />
+          <Route path="/recipe-management" element={<RecipeManagement></RecipeManagement>} />
+          <Route path="/recipe-register" element={<RecipeRegister></RecipeRegister>} />
+          <Route path="/teste" element={<ShopList></ShopList>} />
           {/* <Route path="blogs" element={<Blogs />} />
           <Route path="contact" element={<Contact />} />
           <Route path="*" element={<NoPage />} /> */}

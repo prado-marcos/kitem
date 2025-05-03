@@ -1,41 +1,46 @@
-import { Alert, Box, Button, Snackbar, TextField } from "@mui/material";
+import { Box, Button, TextField } from "@mui/material";
 import { useState, ChangeEvent, FormEvent } from "react";
-import loginBanner from "../assets/login_banner.jpg";
+import registerBanner from "../assets/register_banner.jpg";
 import { Eye, EyeOff } from "lucide-react";
 
-interface LoginProps {
-  onLogin: (userData: any) => void;
+interface RegisterProps {
+  onSwitchToLogin: () => void;
 }
 
 interface FormData {
+  name: string;
   email: string;
   password: string;
 }
 
 interface FormErrors {
+  name?: string;
   email?: string;
   password?: string;
 }
 
-export default function Login({ onLogin }: LoginProps) {
+export default function Register({ onSwitchToLogin }: RegisterProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<FormData>({
+    name: "",
     email: "",
     password: "",
   });
+
   const [errors, setErrors] = useState<FormErrors>({});
-  const [snackBarOpen, setSnackBarOpen] = useState(false);
-  const [snackBarMessage, setSnackBarMessage] = useState("");
-  const [snackBarSeverity, setSnackBarSeverity] = useState<"success" | "error">("success");
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: "" }));
+    setErrors((prev) => ({ ...prev, [name]: "" })); // limpa o erro ao digitar
   }
 
   function validate() {
     const newErrors: FormErrors = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Nome é obrigatório";
+    }
 
     if (!formData.email.trim()) {
       newErrors.email = "Email é obrigatório";
@@ -50,6 +55,7 @@ export default function Login({ onLogin }: LoginProps) {
     }
 
     setErrors(newErrors);
+
     return Object.keys(newErrors).length === 0;
   }
 
@@ -58,39 +64,42 @@ export default function Login({ onLogin }: LoginProps) {
 
     if (!validate()) return;
 
-    fetch("/login", {
+    fetch("/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
     })
       .then((response) => {
-        if (!response.ok) throw new Error("Falha no login");
+        if (!response.ok) throw new Error("Falha no cadastro");
         return response.json();
       })
-      .then((userData) => {
-        onLogin(userData);
-        setSnackBarMessage("Login realizado com sucesso!");
-        setSnackBarSeverity("success");
-        setSnackBarOpen(true);
+      .then(() => {
+        alert("Cadastro realizado com sucesso!");
+        setFormData({ name: "", email: "", password: "" });
       })
       .catch(() => {
-        setSnackBarMessage("Falha no login");
-        setSnackBarSeverity("error");
-        setSnackBarOpen(true);
+        alert("Erro ao realizar cadastro");
       });
   }
 
   return (
     <Box className="flex flex-row flex-center justify-evenly items-center my-12">
-      <img
-        src={loginBanner}
-        alt="Banner Login"
-        className="max-w-md h-auto object-cover rounded-sm"
-      />
-      <form onSubmit={handleSubmit}>
+      <form className="flex flex-col" onSubmit={handleSubmit}>
+        <TextField
+          name="name"
+          label="Nome"
+          value={formData.name}
+          onChange={handleChange}
+          variant="outlined"
+          sx={{ mb: 2 }}
+          className="w-100"
+          error={Boolean(errors.name)}
+          helperText={errors.name}
+        />
         <TextField
           name="email"
           label="Email"
+          type="email"
           value={formData.email}
           onChange={handleChange}
           variant="outlined"
@@ -128,7 +137,7 @@ export default function Login({ onLogin }: LoginProps) {
           <Button
             type="button"
             className="w-[50%]"
-            title="Entrar"
+            onClick={onSwitchToLogin}
             sx={{
               backgroundColor: "#ffffff",
               "&:hover": { backgroundColor: "#f0f0f0" },
@@ -136,13 +145,11 @@ export default function Login({ onLogin }: LoginProps) {
             }}
             variant="contained"
           >
-            Esqueceu a senha?
+            Já é cadastrado?
           </Button>
           <Button
             type="submit"
             className="w-[50%]"
-            title="Entrar"
-            color="primary"
             variant="contained"
             sx={{
               backgroundColor: "#000000",
@@ -150,22 +157,15 @@ export default function Login({ onLogin }: LoginProps) {
               color: "#ffffff",
             }}
           >
-            Entrar
+            Cadastrar
           </Button>
         </Box>
       </form>
-      <Snackbar
-        open={snackBarOpen}
-        autoHideDuration={6000}
-        onClose={() => setSnackBarOpen(false)}
-      >
-        <Alert
-          severity={snackBarSeverity}
-          onClose={() => setSnackBarOpen(false)}
-        >
-          {snackBarMessage}
-        </Alert>
-      </Snackbar>
+      <img
+        src={registerBanner}
+        alt="Banner Cadastro"
+        className="max-h-[300px] w-auto object-cover rounded-sm"
+      />
     </Box>
   );
 }
