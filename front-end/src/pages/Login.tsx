@@ -49,7 +49,7 @@ export default function Login({ onLogin }: LoginProps) {
   }
 
   return (
-    <Box className="flex flex-row flex-center justify-evenly items-center my-15">
+    <Box className="flex flex-row flex-center justify-evenly items-center my-12">
       <img
         src={loginBanner}
         alt="Banner Login"
@@ -88,13 +88,35 @@ export default function Login({ onLogin }: LoginProps) {
             )}
           </button>
         </Box>
-        <button
-          type="submit"
-          className="bg-gray-300 rounded-sm p-2 pointer-button font-bold w-100"
-          title="Entrar"
-        >
-          Entrar
-        </button>
+        <Box className="flex flex-row gap-2">
+          <Button
+            type="button"
+            className="w-[50%]"
+            title="Entrar"
+            sx={{
+              backgroundColor: "#ffffff",
+              "&:hover": { backgroundColor: "#f0f0f0" },
+              color: "#000000",
+            }}
+            variant="contained"
+          >
+            Esqueceu a senha?
+          </Button>
+          <Button
+            type="submit"
+            className="w-[50%]"
+            title="Entrar"
+            color="primary"
+            variant="contained"
+            sx={{
+              backgroundColor: "#000000",
+              "&:hover": { backgroundColor: "#5C5C5C" },
+              color: "#ffffff",
+            }}
+          >
+            Entrar
+          </Button>
+        </Box>
       </form>
       <Snackbar
         open={openSnackBar}

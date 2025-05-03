@@ -8,6 +8,7 @@ import { Navigation } from "swiper/modules";
 import "swiper/css";
 // @ts-expect-error importe funciona normalmente
 import "swiper/css/navigation";
+import { Button } from "@mui/material";
 
 interface FilterProps {
   label: string;
@@ -105,24 +106,36 @@ function Banner() {
             onChange={(e) => setQuery(e.target.value)}
             className="bg-white rounded-sm px-2 py-1"
           />
-          <button
+          <Button
             onClick={handleSearch}
-            className="bg-gray-300 rounded-sm px-2 py-1 pointer-button"
             title="Buscar"
+            type="button"
+            sx={{
+              backgroundColor: "#D9D9D9",
+              "&:hover": { backgroundColor: "#f0f0f0" },
+              color: "#000000",
+            }}
+            variant="contained"
           >
-            <Search className="h-4 w-4 my-1" />
-          </button>
-          <button
+            <Search className="size-5" />
+          </Button>
+          <Button
             onClick={() => handleAdvancedSearch(!toggleAdvancedSearch)}
-            className="bg-gray-300 rounded-sm px-2 py-1 pointer-button"
             title="Busca Avançada"
+            type="button"
+            sx={{
+              backgroundColor: "#D9D9D9",
+              "&:hover": { backgroundColor: "#f0f0f0" },
+              color: "#000000",
+            }}
+            variant="contained"
           >
             {toggleAdvancedSearch ? (
               <ChevronUp className="h-4 w-4 my-1" />
             ) : (
               <ChevronDown className="h-4 w-4 my-1" />
             )}
-          </button>
+          </Button>
         </div>
       </div>
       <AnimatePresence>
@@ -236,8 +249,12 @@ function FilterOption({ label, name, value }: FilterOptionProps) {
   );
 }
 
-function RecipeCarousel({ title, subTitle, recipes = [] }: RecipeCarouselProps) {
-// function RecipeCarousel({ title, subTitle, recipes }: RecipeCarousel) {
+function RecipeCarousel({
+  title,
+  subTitle,
+  recipes = [],
+}: RecipeCarouselProps) {
+  // function RecipeCarousel({ title, subTitle, recipes }: RecipeCarousel) {
   return (
     <div className="w-full flex flex-col items-center py-10">
       <h2 className="text-4xl font-bold mb-2">{title}</h2>
