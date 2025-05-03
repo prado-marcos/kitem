@@ -1,6 +1,7 @@
 import Home from "./pages/Home";
-import Receita from "./pages/Receita";
+import Receita from "./pages/Recipe";
 import Layout from "./pages/Layout";
+import Login from "./pages/Login";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 export default function App() {
@@ -24,6 +25,7 @@ export default function App() {
               />
             }
           />
+          <Route path="/login" element={<Login></Login>} />
           {/* <Route path="blogs" element={<Blogs />} />
           <Route path="contact" element={<Contact />} />
           <Route path="*" element={<NoPage />} /> */}
@@ -60,6 +62,6 @@ Despeje sobre o bolo ainda quente.`,
   favorite: true,
   imageUrl:
     "https://canaldareceita.com.br/wp-content/uploads/2025/01/BOLO-DE-CENOURA-FOFINHO-DE-LIQUIDIFICADOR.jpg",
-    difficulty: 'Fácil',
-    time: 60,
+  difficulty: "Fácil",
+  time: 60,
 };

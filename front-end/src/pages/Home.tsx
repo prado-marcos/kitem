@@ -20,7 +20,7 @@ interface FilterOptionProps {
   value: string;
 }
 
-interface Recipe {
+interface RecipeProps {
   id: number;
   title: string;
   imageUrl: string;
@@ -28,13 +28,13 @@ interface Recipe {
   rating: number;
 }
 
-interface RecipeCarousel {
+interface RecipeCarouselProps {
   title: string;
   subTitle: string;
-  recipes: Recipe[];
+  recipes: RecipeProps[];
 }
 
-const recipes: Recipe[] = [
+const recipes: RecipeProps[] = [
   {
     id: 1,
     title: "Pasta Carbonara",
@@ -236,7 +236,7 @@ function FilterOption({ label, name, value }: FilterOptionProps) {
   );
 }
 
-function RecipeCarousel({ title, subTitle, recipes = [] }: RecipeCarousel) {
+function RecipeCarousel({ title, subTitle, recipes = [] }: RecipeCarouselProps) {
 // function RecipeCarousel({ title, subTitle, recipes }: RecipeCarousel) {
   return (
     <div className="w-full flex flex-col items-center py-10">

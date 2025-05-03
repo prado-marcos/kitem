@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Heart, Share2 } from "lucide-react";
 
-interface IngredienteRecipeInterface {
+interface IngredienteRecipeProps {
   quantity: number;
   ingredient: string;
 }
 
-interface RecipeInterface {
+interface RecipeProps {
   title: string;
-  ingredientRecipe: IngredienteRecipeInterface[];
+  ingredientRecipe: IngredienteRecipeProps[];
   favorite: boolean;
   imageUrl: string;
   description: string;
@@ -24,7 +24,7 @@ export default function Receita({
   imageUrl,
   difficulty,
   time,
-}: RecipeInterface) {
+}: RecipeProps) {
   const [isFavorite, setFavorite] = useState(favorite);
 
   function handleFavorite() {
