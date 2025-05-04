@@ -181,7 +181,7 @@ class ReceitaFilterAPIView(APIView):
         restricoes_alimentares = request.query_params.getlist('restricao_alimentar')  # Aceita múltiplos valores
         dificuldade = request.query_params.get('dificuldade')
         tempo_preparo = request.query_params.get('tempo_preparo')
-        tempo_preparo_operador = request.query_params.get('tempo_preparo_operador', 'menor')  # Padrão: "menor"
+        tempo_preparo_operador = request.query_params.get('tempo_preparo_operador', 'menos')  # Padrão: "menor"
         search = request.query_params.get('search')  # Campo de pesquisa para o título da receita
 
         # Validação de tempo de preparo
@@ -203,7 +203,7 @@ class ReceitaFilterAPIView(APIView):
             filtros &= Q(dificuldade__iexact=dificuldade)
         if tempo_preparo:
             if tempo_preparo_operador == "mais":
-                filtros &= Q(tempo_preparo__gt=tempo_preparo)
+                filtros &= Q(tempo_preparo__gte=tempo_preparo)
             else:  # "menos" ou qualquer outro valor
                 filtros &= Q(tempo_preparo__lte=tempo_preparo)
         if search:
