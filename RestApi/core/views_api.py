@@ -13,6 +13,8 @@ from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from django.contrib.auth.models import User as Usuario
+from django.db.models import Count
+from rest_framework.views import APIView
 
 class UsuarioListCreateAPIView(generics.ListCreateAPIView):
     queryset = Usuario.objects.all()
@@ -64,6 +66,33 @@ class ReceitaRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
             raise NotFound(detail="Receita não encontrada.")
         except Exception as e:
             raise NotFound(detail=f"Erro inesperado: {str(e)}")
+
+class ReceitaDetalhadaAPIView(APIView):
+    def get(self, request, pk):
+        try:
+            receita = Receita.objects.get(pk=pk)
+            ingredientes = ReceitaIngrediente.objects.filter(id_receita=receita).select_related('id_ingrediente')
+            favoritos_count = Favorito.objects.filter(id_receita=receita).count()
+
+            data = {
+                "id_receita": receita.id,
+                "titulo": receita.titulo,
+                "ingredientes": [
+                    {
+                        "id_receita_ingrediente": ingrediente.id,
+                        "quantidade": ingrediente.quantidade,
+                        "unidade_medida": ingrediente.unidade_medida,
+                        "nome_ingrediente": ingrediente.id_ingrediente.nome,
+                    }
+                    for ingrediente in ingredientes
+                ],
+                "favorito": favoritos_count,
+            }
+
+            return Response(data)
+
+        except Receita.DoesNotExist:
+            raise NotFound(detail="Receita não encontrada.")
 
 # Views para a API de ReceitaIngrediente
 class ReceitaIngredienteListCreateAPIView(generics.ListCreateAPIView):

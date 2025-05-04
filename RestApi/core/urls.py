@@ -21,6 +21,9 @@ urlpatterns = [
     # URLs para Receitas
     path('receitas/', views_api.ReceitaListCreateAPIView.as_view(), name='receita-list-create'),
     path('receitas/<int:pk>/', views_api.ReceitaRetrieveUpdateDestroyAPIView.as_view(), name='receita-detail'),
+    # URL para Receita Detalhada
+    path('receitas/<int:pk>/detalhada/', views_api.ReceitaDetalhadaAPIView.as_view(), name='receita-detalhada'),
+
 
     # URLs para ReceitaIngrediente
     path('receita_ingredientes/', views_api.ReceitaIngredienteListCreateAPIView.as_view(), name='receita-ingrediente-list-create'),
