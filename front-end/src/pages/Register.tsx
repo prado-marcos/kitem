@@ -1,4 +1,4 @@
-import { Box, Button, TextField } from "@mui/material";
+import { Box, Button, TextField, Snackbar, Alert } from "@mui/material";
 import { useState, ChangeEvent, FormEvent } from "react";
 import registerBanner from "../assets/register_banner.jpg";
 import { Eye, EyeOff } from "lucide-react";
@@ -35,6 +35,11 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<
+    "success" | "error" | "info" | "warning"
+  >("success");
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
@@ -78,7 +83,7 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
 
     if (!validate()) return;
 
-    fetch("/api/usuario", {
+    fetch("/api/usuarios", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -93,7 +98,10 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
         return response.json();
       })
       .then(() => {
-        alert("Cadastro realizado com sucesso!");
+        setSnackbarMessage("Cadastro realizado com sucesso!");
+        setSnackbarSeverity("success");
+        setSnackbarOpen(true);
+
         setFormData({
           firstName: "",
           lastName: "",
@@ -103,8 +111,14 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
         });
       })
       .catch(() => {
-        alert("Erro ao realizar cadastro");
+        setSnackbarMessage("Erro ao realizar cadastro");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
       });
+  }
+
+  function handleCloseSnackbar() {
+    setSnackbarOpen(false);
   }
 
   return (
@@ -118,8 +132,8 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
           variant="outlined"
           sx={{ mb: 2 }}
           className="w-100"
-          error={Boolean(errors.firstName)}
-          helperText={errors.firstName}
+          error={Boolean(errors.userName)}
+          helperText={errors.userName}
         />
         <TextField
           name="firstName"
@@ -192,12 +206,7 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
             }}
             variant="contained"
           >
-            <Link
-              to="/login"
-              // className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              Já é cadastrado?
-            </Link>
+            <Link to="/login">Já é cadastrado?</Link>
           </Button>
           <Button
             type="submit"
@@ -218,6 +227,22 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
         alt="Banner Cadastro"
         className="max-h-[300px] w-auto object-cover rounded-sm"
       />
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbarSeverity}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

@@ -5,6 +5,7 @@ import Register from "../pages/Register";
 import Recipe from "../pages/Recipe";
 import NotFoundPage from "../pages/NotFound";
 import Layout from "../pages/Layout";
+import RecipeList from "../pages/RecipeList";
 // import PrivateRoute from './PrivateRoute';
 
 function AppRouter() {
@@ -16,6 +17,7 @@ function AppRouter() {
           <Route path="/login" element={<Login />} />
           <Route path="/cadastro" element={<Register />} />
           <Route path="/receita/:id" element={<Recipe />} />
+          <Route path="/receitas" element={<RecipeList />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

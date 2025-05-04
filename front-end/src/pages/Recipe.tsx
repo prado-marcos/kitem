@@ -44,7 +44,7 @@ export default function Recipe() {
             ingredient: ingredient.nome_ingrediente,
             unitMeasure: ingredient.unidade_medida,
           })),
-          imageUrl: data.url_imagem || "https://freesvg.org/img/mealplate.png",
+          imageUrl: data.imagem || "https://freesvg.org/img/mealplate.png",
           difficulty: data.dificuldade,
           time: converterHoraParaMinutos(data.tempo_preparo),
         });

@@ -9,7 +9,10 @@ import "swiper/css";
 import "swiper/css/navigation";
 import { Box, Button, CircularProgress } from "@mui/material";
 import api from "../services/api";
+import { useNavigate } from "react-router-dom";
+
 const altImage = "https://freesvg.org/img/mealplate.png";
+
 interface FilterProps {
   label: string;
   children: React.ReactNode;
@@ -19,6 +22,7 @@ interface FilterOptionProps {
   label: string;
   name: string;
   value: string;
+  onChange: (name: string, value: string) => void;
 }
 
 interface RecipeProps {
@@ -31,10 +35,18 @@ interface RecipeProps {
 }
 
 export default function Home() {
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [toggleAdvancedSearch, setToggleAdvancedSearch] = useState(false);
   const [recipes, setRecipes] = useState<RecipeProps[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [selectedFilters, setSelectedFilters] = useState({
+    restricao: "",
+    tipo: "",
+    dificuldade: "",
+    tempo: "",
+  });
 
   useEffect(() => {
     async function fetchRecipes() {
@@ -43,10 +55,9 @@ export default function Home() {
         const formattedRecipes = response.data.map((recipe: any) => ({
           id: recipe.id,
           title: recipe.titulo,
-          imageUrl: recipe?.url_imagem || altImage,
-          // imageUrl: recipe.url_imagem,
+          imageUrl: recipe?.imagem || altImage,
           time: converterHoraParaMinutos(recipe.tempo_preparo),
-          viewCount: recipe.quantidade_visualizacao, // A API não retorna viewCount, então definimos um valor padrão
+          viewCount: recipe.quantidade_visualizacao,
           difficulty: recipe.dificuldade,
         }));
         setRecipes(formattedRecipes);
@@ -61,8 +72,28 @@ export default function Home() {
     fetchRecipes();
   }, []);
 
-  function handleSearch() {
-    console.log(query);
+  async function handleSearch() {
+    setLoading(true);
+
+    try {
+      const params = new URLSearchParams();
+
+      if (query) params.append("search", query);
+      if (selectedFilters.restricao)
+        params.append("restricao_alimentar", selectedFilters.restricao);
+      if (selectedFilters.tipo) params.append("tipo", selectedFilters.tipo);
+      if (selectedFilters.dificuldade)
+        params.append("dificuldade", selectedFilters.dificuldade);
+      if (selectedFilters.tempo)
+        params.append("tempo_preparo", selectedFilters.tempo);
+
+      // Redireciona para a página de receitas com os parâmetros de busca
+      navigate(`/receitas?${params.toString()}`);
+    } catch (error) {
+      console.error("Erro ao buscar receitas:", error);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function handleAdvancedSearch(toggleButton: boolean) {
@@ -130,7 +161,12 @@ export default function Home() {
         </div>
       </div>
       <AnimatePresence>
-        {toggleAdvancedSearch && <AdvancedSearch />}
+        {toggleAdvancedSearch && (
+          <AdvancedSearch
+            selectedFilters={selectedFilters}
+            setSelectedFilters={setSelectedFilters}
+          />
+        )}
       </AnimatePresence>
       <RecipeCarousel
         title="Receitas Populares"
@@ -146,18 +182,16 @@ export default function Home() {
   );
 }
 
-function AdvancedSearch() {
-  // const [minTime, setMinTime] = useState("");
-
-  // function handleMinTimeChange(
-  //   e: React.ChangeEvent<HTMLInputElement>,
-  //   setState: React.Dispatch<React.SetStateAction<string>>
-  // ) {
-  //   const value = e.target.value;
-  //   if (/^\d*$/.test(value) && parseInt(value) > 0) {
-  //     setState(value);
-  //   }
-  // }
+function AdvancedSearch({
+  selectedFilters,
+  setSelectedFilters,
+}: {
+  selectedFilters: any;
+  setSelectedFilters: any;
+}) {
+  function handleFilterChange(name: string, value: string) {
+    setSelectedFilters((prev: any) => ({ ...prev, [name]: value }));
+  }
 
   return (
     <motion.div
@@ -169,51 +203,111 @@ function AdvancedSearch() {
     >
       <div className="py-10 flex flex-col gap-5">
         <Filter label="Restrição Alimentar">
-          <FilterOption label="Vegano" name="restricao" value="vegano" />
+          <FilterOption
+            label="Vegano"
+            name="restricao"
+            value="vegano"
+            onChange={handleFilterChange}
+          />
           <FilterOption
             label="Vegetariano"
             name="restricao"
             value="vegetariano"
+            onChange={handleFilterChange}
           />
           <FilterOption
             label="Sem Glúten"
             name="restricao"
             value="sem-gluten"
+            onChange={handleFilterChange}
           />
           <FilterOption
             label="Baixa Caloria"
             name="restricao"
             value="baixa-caloria"
+            onChange={handleFilterChange}
           />
           <FilterOption
             label="Sem Lactose"
             name="restricao"
             value="sem-lactose"
+            onChange={handleFilterChange}
           />
         </Filter>
 
         <Filter label="Tipo">
-          <FilterOption label="Doce" name="tipo" value="doce" />
-          <FilterOption label="Salgado" name="tipo" value="salgado" />
+          <FilterOption
+            label="Doce"
+            name="tipo"
+            value="doce"
+            onChange={handleFilterChange}
+          />
+          <FilterOption
+            label="Salgado"
+            name="tipo"
+            value="salgado"
+            onChange={handleFilterChange}
+          />
         </Filter>
 
         <Filter label="Nível de Dificuldade">
-          <FilterOption label="Fácil" name="dificuldade" value="facil" />
-          <FilterOption label="Médio" name="dificuldade" value="medio" />
-          <FilterOption label="Difícil" name="dificuldade" value="dificil" />
+          <FilterOption
+            label="Fácil"
+            name="dificuldade"
+            value="Fácil"
+            onChange={handleFilterChange}
+          />
+          <FilterOption
+            label="Médio"
+            name="dificuldade"
+            value="Médio"
+            onChange={handleFilterChange}
+          />
+          <FilterOption
+            label="Difícil"
+            name="dificuldade"
+            value="Difícil"
+            onChange={handleFilterChange}
+          />
           <FilterOption
             label="Master Chef"
             name="dificuldade"
-            value="master-chef"
+            value="Master Chef"
+            onChange={handleFilterChange}
           />
         </Filter>
 
         <Filter label="Tempo de preparo">
-          <FilterOption label="Menos de 20min" name="tempo" value="20" />
-          <FilterOption label="Menos de 30min" name="tempo" value="30" />
-          <FilterOption label="Menos de 40min" name="tempo" value="40" />
-          <FilterOption label="Menos de 1h" name="tempo" value="60" />
-          <FilterOption label="Mais de 1h" name="tempo" value="61" />
+          <FilterOption
+            label="Menos de 20 min"
+            name="tempo"
+            value="20"
+            onChange={handleFilterChange}
+          />
+          <FilterOption
+            label="Menos de 30 min"
+            name="tempo"
+            value="30"
+            onChange={handleFilterChange}
+          />
+          <FilterOption
+            label="Menos de 40 min"
+            name="tempo"
+            value="40"
+            onChange={handleFilterChange}
+          />
+          <FilterOption
+            label="Menos de 1h"
+            name="tempo"
+            value="60"
+            onChange={handleFilterChange}
+          />
+          {/* <FilterOption
+            label="Mais de 1h"
+            name="tempo"
+            value="61"
+            onChange={handleFilterChange}
+          /> */}
         </Filter>
       </div>
     </motion.div>
@@ -229,10 +323,16 @@ function Filter({ label, children }: FilterProps) {
   );
 }
 
-function FilterOption({ label, name, value }: FilterOptionProps) {
+function FilterOption({ label, name, value, onChange }: FilterOptionProps) {
   return (
     <label className="cursor-pointer">
-      <input type="radio" name={name} value={value} className="peer hidden" />
+      <input
+        type="radio"
+        name={name}
+        value={value}
+        className="peer hidden"
+        onChange={() => onChange(name, value)}
+      />
       <div className="px-4 py-2 rounded bg-gray-200 peer-checked:bg-gray-500 peer-checked:text-white transition-all">
         {label}
       </div>
@@ -242,12 +342,8 @@ function FilterOption({ label, name, value }: FilterOptionProps) {
 
 function converterHoraParaMinutos(hora: string): number {
   const partes = hora.split(":");
-
   const horas = parseInt(partes[0], 10);
   const minutos = parseInt(partes[1], 10);
   const segundos = partes[2] ? parseInt(partes[2], 10) : 0;
-
-  const totalMinutos = horas * 60 + minutos + Math.round(segundos / 60);
-
-  return totalMinutos;
+  return horas * 60 + minutos + Math.round(segundos / 60);
 }
