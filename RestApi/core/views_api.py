@@ -107,14 +107,30 @@ class ReceitaFilterAPIView(APIView):
         restricoes_alimentares = request.query_params.getlist('restricao_alimentar')  # Aceita múltiplos valores
         dificuldade = request.query_params.get('dificuldade')
         tempo_preparo = request.query_params.get('tempo_preparo')
-        tempo_preparo_operador = request.query_params.get('tempo_preparo_operador', 'menos')  # Padrão: "menor"
+        tempo_preparo_operador = request.query_params.get('tempo_preparo_operador', 'menos')  # Padrão: "menos"
         search = request.query_params.get('search')  # Campo de pesquisa para o título da receita
+
+        # Validações
+        valid_tipos = ["doce", "salgado"]
+        valid_dificuldades = ["Fácil", "Médio", "Difícil", "Master Chef"]
+        valid_operadores = ["mais", "menos"]
+
+        if tipo and tipo not in valid_tipos:
+            raise ValidationError({"tipo": f"Tipo inválido. Valores permitidos: {', '.join(valid_tipos)}"})
+
+        if dificuldade and dificuldade not in valid_dificuldades:
+            raise ValidationError({"dificuldade": f"Dificuldade inválida. Valores permitidos: {', '.join(valid_dificuldades)}"})
+
+        if tempo_preparo_operador and tempo_preparo_operador not in valid_operadores:
+            raise ValidationError({"tempo_preparo_operador": f"Operador inválido. Valores permitidos: {', '.join(valid_operadores)}"})
 
         # Validação de tempo de preparo
         if tempo_preparo:
             try:
                 tempo_preparo = int(tempo_preparo)
-                tempo_preparo = timedelta(minutes=tempo_preparo)  # Converte minutos para timedelta
+                horas = tempo_preparo // 60
+                minutos = tempo_preparo % 60
+                tempo_preparo = f"{horas:02}:{minutos:02}:00"
             except ValueError:
                 raise ValidationError({"tempo_preparo": "O tempo de preparo deve ser um número inteiro representando minutos."})
 
@@ -123,22 +139,30 @@ class ReceitaFilterAPIView(APIView):
         if tipo:
             filtros &= Q(tipo__iexact=tipo)
         if restricoes_alimentares:
+            restricoes_query = Q()
             for restricao in restricoes_alimentares:
-                filtros &= Q(restricao_alimentar__icontains=restricao)
+                restricoes_query |= Q(restricao_alimentar__icontains=restricao)
+            filtros &= restricoes_query
         if dificuldade:
             filtros &= Q(dificuldade__iexact=dificuldade)
         if tempo_preparo:
             if tempo_preparo_operador == "mais":
                 filtros &= Q(tempo_preparo__gte=tempo_preparo)
-            else:  # "menos" ou qualquer outro valor
+            elif tempo_preparo_operador == "menos":
                 filtros &= Q(tempo_preparo__lte=tempo_preparo)
         if search:
             filtros &= Q(titulo__icontains=search)  # Busca no título da receita
 
         # Consulta ao banco de dados
-        receitas = Receita.objects.filter(filtros)
-        serializer = ReceitaSerializer(receitas, many=True)
+        try:
+            receitas = Receita.objects.filter(filtros).select_related('id_usuario')
+        except Exception as e:
+            raise ValidationError({"error": f"Erro ao consultar receitas: {str(e)}"})
 
+        if not receitas.exists():
+            return Response({"message": "Nenhuma receita encontrada com os filtros fornecidos."}, status=404)
+
+        serializer = ReceitaSerializer(receitas, many=True)
         return Response(serializer.data)
 
 # Views para a API de ReceitaIngrediente
