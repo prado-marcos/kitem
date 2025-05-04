@@ -43,7 +43,7 @@ export default function Home() {
         const formattedRecipes = response.data.map((recipe: any) => ({
           id: recipe.id,
           title: recipe.titulo,
-          imageUrl: recipe?.url_imagem || altImage ,
+          imageUrl: recipe?.url_imagem || altImage,
           // imageUrl: recipe.url_imagem,
           time: converterHoraParaMinutos(recipe.tempo_preparo),
           viewCount: recipe.quantidade_visualizacao, // A API não retorna viewCount, então definimos um valor padrão
@@ -135,7 +135,7 @@ export default function Home() {
       <RecipeCarousel
         title="Receitas Populares"
         subTitle="Explore as mais acessadas"
-        recipes={recipes.toSorted((a,b) => b.viewCount - a.viewCount)}
+        recipes={recipes.toSorted((a, b) => b.viewCount - a.viewCount)}
       />
       <RecipeCarousel
         title="Sugestões de receitas"
@@ -147,17 +147,17 @@ export default function Home() {
 }
 
 function AdvancedSearch() {
-  const [minTime, setMinTime] = useState("");
+  // const [minTime, setMinTime] = useState("");
 
-  function handleMinTimeChange(
-    e: React.ChangeEvent<HTMLInputElement>,
-    setState: React.Dispatch<React.SetStateAction<string>>
-  ) {
-    const value = e.target.value;
-    if (/^\d*$/.test(value) && parseInt(value) > 0) {
-      setState(value);
-    }
-  }
+  // function handleMinTimeChange(
+  //   e: React.ChangeEvent<HTMLInputElement>,
+  //   setState: React.Dispatch<React.SetStateAction<string>>
+  // ) {
+  //   const value = e.target.value;
+  //   if (/^\d*$/.test(value) && parseInt(value) > 0) {
+  //     setState(value);
+  //   }
+  // }
 
   return (
     <motion.div
@@ -207,13 +207,13 @@ function AdvancedSearch() {
             value="master-chef"
           />
         </Filter>
-        <Filter label="Tempo de Preparo (em minutos)">
-          <input
-            type="text"
-            value={minTime}
-            onChange={(e) => handleMinTimeChange(e, setMinTime)}
-            className="bg-white w-25 px-1 py-1 rounded"
-          />
+
+        <Filter label="Tempo de preparo">
+          <FilterOption label="Menos de 20min" name="tempo" value="20" />
+          <FilterOption label="Menos de 30min" name="tempo" value="30" />
+          <FilterOption label="Menos de 40min" name="tempo" value="40" />
+          <FilterOption label="Menos de 1h" name="tempo" value="60" />
+          <FilterOption label="Mais de 1h" name="tempo" value="61" />
         </Filter>
       </div>
     </motion.div>
@@ -240,67 +240,14 @@ function FilterOption({ label, name, value }: FilterOptionProps) {
   );
 }
 
-// function RecipeCarousel({
-//   title,
-//   subTitle,
-//   recipes = [],
-// }: RecipeCarouselProps) {
-//   // function RecipeCarousel({ title, subTitle, recipes }: RecipeCarousel) {
-//   return (
-//     <div className="w-full flex flex-col items-center py-10">
-//       <h2 className="text-4xl font-bold mb-2">{title}</h2>
-//       <p className="text-gray-600 mb-6">{subTitle}</p>
-
-//       <div className="w-full max-w-6xl">
-//         <Swiper
-//           modules={[Navigation]}
-//           navigation
-//           spaceBetween={20}
-//           slidesPerView={3}
-//           breakpoints={{
-//             0: { slidesPerView: 1 },
-//             640: { slidesPerView: 2 },
-//             1024: { slidesPerView: 3 },
-//           }}
-//           className="pb-8"
-//         >
-//           {recipes.map((recipe) => (
-//             <SwiperSlide key={recipe.id}>
-//               <div className="bg-white shadow rounded overflow-hidden">
-//                 <a href="#">
-//                   <img
-//                     src={recipe.imageUrl}
-//                     alt={recipe.title}
-//                     className="w-full h-64 object-cover"
-//                   />
-//                 </a>
-//                 <div className="p-4">
-//                   <h3 className="text-lg font-semibold">{recipe.title}</h3>
-//                   {/* <p className="mt-2 font-bold">{recipe.viewCount} estrelas</p> */}
-//                   <p className="mt-2 ">
-//                     {recipe.time} min | Dificuldade: {recipe.difficulty}
-//                   </p>
-//                 </div>
-//               </div>
-//             </SwiperSlide>
-//           ))}
-//         </Swiper>
-//       </div>
-//     </div>
-//   );
-// }
-
 function converterHoraParaMinutos(hora: string): number {
-  // Divide a string em partes usando ':' como separador
-  const partes = hora.split(':');
-  
-  // Converte cada parte para número
+  const partes = hora.split(":");
+
   const horas = parseInt(partes[0], 10);
   const minutos = parseInt(partes[1], 10);
-  const segundos = partes[2] ? parseInt(partes[2], 10) : 0; // Caso não tenha segundos
-  
-  // Calcula o total de minutos (arredondando os segundos para minutos)
+  const segundos = partes[2] ? parseInt(partes[2], 10) : 0;
+
   const totalMinutos = horas * 60 + minutos + Math.round(segundos / 60);
-  
+
   return totalMinutos;
 }

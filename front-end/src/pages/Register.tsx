@@ -2,29 +2,36 @@ import { Box, Button, TextField } from "@mui/material";
 import { useState, ChangeEvent, FormEvent } from "react";
 import registerBanner from "../assets/register_banner.jpg";
 import { Eye, EyeOff } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface RegisterProps {
   onSwitchToLogin: () => void;
 }
 
 interface FormData {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
+  userName: string;
 }
 
 interface FormErrors {
-  name?: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
   password?: string;
+  userName?: string;
 }
 
 export default function Register({ onSwitchToLogin }: RegisterProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<FormData>({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
+    userName: "",
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -38,8 +45,15 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
   function validate() {
     const newErrors: FormErrors = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = "Nome é obrigatório";
+    if (!formData.userName.trim()) {
+      newErrors.userName = "Nome de usuário é obrigatório";
+    }
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = "Nome é obrigatório";
+    }
+
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = "Nome é obrigatório";
     }
 
     if (!formData.email.trim()) {
@@ -64,10 +78,15 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
 
     if (!validate()) return;
 
-    fetch("/api/register", {
+    fetch("/api/usuario", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
+      body: JSON.stringify({
+        username: formData.userName,
+        email: formData.email,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+      }),
     })
       .then((response) => {
         if (!response.ok) throw new Error("Falha no cadastro");
@@ -75,7 +94,13 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
       })
       .then(() => {
         alert("Cadastro realizado com sucesso!");
-        setFormData({ name: "", email: "", password: "" });
+        setFormData({
+          firstName: "",
+          lastName: "",
+          email: "",
+          password: "",
+          userName: "",
+        });
       })
       .catch(() => {
         alert("Erro ao realizar cadastro");
@@ -86,15 +111,37 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
     <Box className="flex flex-row flex-center justify-evenly items-center my-12">
       <form className="flex flex-col" onSubmit={handleSubmit}>
         <TextField
-          name="name"
-          label="Nome"
-          value={formData.name}
+          name="userName"
+          label="Nome de Usuário"
+          value={formData.userName}
           onChange={handleChange}
           variant="outlined"
           sx={{ mb: 2 }}
           className="w-100"
-          error={Boolean(errors.name)}
-          helperText={errors.name}
+          error={Boolean(errors.firstName)}
+          helperText={errors.firstName}
+        />
+        <TextField
+          name="firstName"
+          label="Nome"
+          value={formData.firstName}
+          onChange={handleChange}
+          variant="outlined"
+          sx={{ mb: 2 }}
+          className="w-100"
+          error={Boolean(errors.firstName)}
+          helperText={errors.firstName}
+        />
+        <TextField
+          name="lastName"
+          label="Sobrenome"
+          value={formData.lastName}
+          onChange={handleChange}
+          variant="outlined"
+          sx={{ mb: 2 }}
+          className="w-100"
+          error={Boolean(errors.lastName)}
+          helperText={errors.lastName}
         />
         <TextField
           name="email"
@@ -145,7 +192,12 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
             }}
             variant="contained"
           >
-            Já é cadastrado?
+            <Link
+              to="/login"
+              // className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              Já é cadastrado?
+            </Link>
           </Button>
           <Button
             type="submit"
