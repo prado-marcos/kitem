@@ -7,9 +7,12 @@ class Receita(models.Model):
     id = models.AutoField(primary_key=True)
     id_usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='receitas')
     titulo = models.CharField(max_length=50, null=False)
-    descricao = models.CharField(max_length=255, null=False)
+    descricao = models.CharField(max_length=1500, null=False)
     tempo_preparo = models.TimeField(null=False)
     dificuldade = models.CharField(max_length=25, null=False)
+    tipo = models.CharField(max_length=25, null=True)
+    restricao_alimentar = models.CharField(max_length=25, null=True)
+    imagem = models.URLField(max_length=600, null=True)
     quantidade_visualizacao = models.IntegerField(default=0, null=False)
 
 class Ingrediente(models.Model):
