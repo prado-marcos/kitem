@@ -77,6 +77,7 @@ class ReceitaDetalhadaAPIView(APIView):
             data = {
                 "id_receita": receita.id,
                 "titulo": receita.titulo,
+                "dificuldade": receita.dificuldade,
                 "ingredientes": [
                     {
                         "id_receita_ingrediente": ingrediente.id,
