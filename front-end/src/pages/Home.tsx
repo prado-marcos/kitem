@@ -87,7 +87,7 @@ export default function Home() {
           Encontre a receita perfeita!
         </h1>
         <h3 className="text-1xl font-bold text-white text-shadow-lg">
-          Busque por receitas ou por ingredientes que tem em casa
+          Busque por receitas do seu interesse
         </h3>
         <div className="flex items-center gap-1">
           <input

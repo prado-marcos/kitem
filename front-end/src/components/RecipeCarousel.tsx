@@ -4,6 +4,7 @@ import { Navigation } from "swiper/modules";
 import "swiper/css";
 // @ts-expect-error importe funciona normalmente
 import "swiper/css/navigation";
+import { Link } from "react-router-dom";
 
 interface RecipeCarouselProps {
   title: string;
@@ -47,13 +48,13 @@ export default function RecipeCarousel({
           {recipes.map((recipe) => (
             <SwiperSlide key={recipe.id}>
               <div className="bg-white shadow rounded overflow-hidden">
-                <a href={"/receitas/" + recipe.id}>
+                <Link to={`/receita/${recipe.id}`} key={recipe.id}>
                   <img
                     src={recipe.imageUrl}
                     alt={recipe.title}
                     className="w-full h-64 object-cover"
                   />
-                </a>
+                </Link>
                 <div className="p-4">
                   <h3 className="text-lg font-semibold">{recipe.title}</h3>
                   {/* <p className="mt-2 font-bold">{recipe.viewCount} estrelas</p> */}
