@@ -11,20 +11,31 @@ from .serializers import (
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from rest_framework.views import APIView
+from rest_framework.exceptions import ValidationError
+from django.db.models import Q
+from datetime import timedelta
 
 # Views para a API de Ingredientes
 class IngredienteListCreateAPIView(generics.ListCreateAPIView):
+    """
+    Endpoint para listar e criar ingredientes.
+    """
     queryset = Ingrediente.objects.all()
     serializer_class = IngredienteSerializer
 
-# Adição de um método get_object para lidar com a busca de um objeto específico
 class IngredienteRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Endpoint para recuperar, atualizar ou deletar um ingrediente específico.
+    """
     queryset = Ingrediente.objects.all()
     serializer_class = IngredienteSerializer
+
     def get_object(self):
-        # tenta buscar o objeto
+        """
+        Recupera um ingrediente pelo ID ou retorna erro caso não seja encontrado.
+        """
         try:
-            # self.kwargs é um dicionário que contém os parâmetros da URL 
             return Ingrediente.objects.get(pk=self.kwargs['pk'])
         except Ingrediente.DoesNotExist:
             raise NotFound(detail="Ingrediente não encontrado.")
@@ -33,13 +44,23 @@ class IngredienteRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIV
 
 # Views para a API de Receitas
 class ReceitaListCreateAPIView(generics.ListCreateAPIView):
+    """
+    Endpoint para listar e criar receitas.
+    """
     queryset = Receita.objects.all()
     serializer_class = ReceitaSerializer
 
 class ReceitaRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Endpoint para recuperar, atualizar ou deletar uma receita específica.
+    """
     queryset = Receita.objects.all()
     serializer_class = ReceitaSerializer
+
     def get_object(self):
+        """
+        Recupera uma receita pelo ID ou retorna erro caso não seja encontrada.
+        """
         try:
             return Receita.objects.get(pk=self.kwargs['pk'])
         except Receita.DoesNotExist:
@@ -49,13 +70,23 @@ class ReceitaRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
 
 # Views para a API de ReceitaIngrediente
 class ReceitaIngredienteListCreateAPIView(generics.ListCreateAPIView):
+    """
+    Endpoint para listar e criar associações entre receitas e ingredientes.
+    """
     queryset = ReceitaIngrediente.objects.all()
     serializer_class = ReceitaIngredienteSerializer
 
 class ReceitaIngredienteRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Endpoint para recuperar, atualizar ou deletar uma associação específica entre receita e ingrediente.
+    """
     queryset = ReceitaIngrediente.objects.all()
     serializer_class = ReceitaIngredienteSerializer
+
     def get_object(self):
+        """
+        Recupera uma associação entre receita e ingrediente pelo ID ou retorna erro caso não seja encontrada.
+        """
         try:
             return ReceitaIngrediente.objects.get(pk=self.kwargs['pk'])
         except ReceitaIngrediente.DoesNotExist:
@@ -65,13 +96,23 @@ class ReceitaIngredienteRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDest
 
 # Views para a API de Favoritos
 class FavoritoListCreateAPIView(generics.ListCreateAPIView):
+    """
+    Endpoint para listar e criar favoritos.
+    """
     queryset = Favorito.objects.all()
     serializer_class = FavoritoSerializer
 
 class FavoritoRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Endpoint para recuperar, atualizar ou deletar um favorito específico.
+    """
     queryset = Favorito.objects.all()
     serializer_class = FavoritoSerializer
+
     def get_object(self):
+        """
+        Recupera um favorito pelo ID ou retorna erro caso não seja encontrado.
+        """
         try:
             return Favorito.objects.get(pk=self.kwargs['pk'])
         except Favorito.DoesNotExist:
@@ -81,13 +122,23 @@ class FavoritoRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView
 
 # Views para a API de Lista de Compras
 class ListaComprasListCreateAPIView(generics.ListCreateAPIView):
+    """
+    Endpoint para listar e criar listas de compras.
+    """
     queryset = ListaCompras.objects.all()
     serializer_class = ListaComprasSerializer
 
 class ListaComprasRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Endpoint para recuperar, atualizar ou deletar uma lista de compras específica.
+    """
     queryset = ListaCompras.objects.all()
     serializer_class = ListaComprasSerializer
+
     def get_object(self):
+        """
+        Recupera uma lista de compras pelo ID ou retorna erro caso não seja encontrada.
+        """
         try:
             return ListaCompras.objects.get(pk=self.kwargs['pk'])
         except ListaCompras.DoesNotExist:
@@ -97,19 +148,72 @@ class ListaComprasRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPI
 
 # Views para a API de ListaComprasIngrediente
 class ListaComprasIngredienteListCreateAPIView(generics.ListCreateAPIView):
+    """
+    Endpoint para listar e criar associações entre listas de compras e ingredientes.
+    """
     queryset = ListaComprasIngrediente.objects.all()
     serializer_class = ListaComprasIngredienteSerializer
 
 class ListaComprasIngredienteRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Endpoint para recuperar, atualizar ou deletar uma associação específica entre lista de compras e ingrediente.
+    """
     queryset = ListaComprasIngrediente.objects.all()
     serializer_class = ListaComprasIngredienteSerializer
+
     def get_object(self):
+        """
+        Recupera uma associação entre lista de compras e ingrediente pelo ID ou retorna erro caso não seja encontrada.
+        """
         try:
             return ListaComprasIngrediente.objects.get(pk=self.kwargs['pk'])
         except ListaComprasIngrediente.DoesNotExist:
             raise NotFound(detail="Ingrediente da Lista de Compras não encontrado.")
         except Exception as e:
             raise NotFound(detail=f"Erro inesperado: {str(e)}")
+
+class ReceitaFilterAPIView(APIView):
+    """
+    Endpoint para filtrar receitas com base em tipo, restrição alimentar, dificuldade, tempo de preparo e pesquisa por nome.
+    """
+    def get(self, request):
+        tipo = request.query_params.get('tipo')
+        restricoes_alimentares = request.query_params.getlist('restricao_alimentar')  # Aceita múltiplos valores
+        dificuldade = request.query_params.get('dificuldade')
+        tempo_preparo = request.query_params.get('tempo_preparo')
+        tempo_preparo_operador = request.query_params.get('tempo_preparo_operador', 'menor')  # Padrão: "menor"
+        search = request.query_params.get('search')  # Campo de pesquisa para o título da receita
+
+        # Validação de tempo de preparo
+        if tempo_preparo:
+            try:
+                tempo_preparo = int(tempo_preparo)
+                tempo_preparo = timedelta(minutes=tempo_preparo)  # Converte minutos para timedelta
+            except ValueError:
+                raise ValidationError({"tempo_preparo": "O tempo de preparo deve ser um número inteiro representando minutos."})
+
+        # Construção do filtro dinâmico
+        filtros = Q()
+        if tipo:
+            filtros &= Q(tipo__iexact=tipo)
+        if restricoes_alimentares:
+            for restricao in restricoes_alimentares:
+                filtros &= Q(restricao_alimentar__icontains=restricao)
+        if dificuldade:
+            filtros &= Q(dificuldade__iexact=dificuldade)
+        if tempo_preparo:
+            if tempo_preparo_operador == "mais":
+                filtros &= Q(tempo_preparo__gt=tempo_preparo)
+            else:  # "menos" ou qualquer outro valor
+                filtros &= Q(tempo_preparo__lte=tempo_preparo)
+        if search:
+            filtros &= Q(titulo__icontains=search)  # Busca no título da receita
+
+        # Consulta ao banco de dados
+        receitas = Receita.objects.filter(filtros)
+        serializer = ReceitaSerializer(receitas, many=True)
+
+        return Response(serializer.data)
 
 @api_view(['GET'])
 def api_root(request):
