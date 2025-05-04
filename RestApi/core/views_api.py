@@ -95,6 +95,49 @@ class ReceitaDetalhadaAPIView(APIView):
         except Receita.DoesNotExist:
             raise NotFound(detail="Receita não encontrada.")
 
+class ReceitaFilterAPIView(APIView):
+    """
+    Endpoint para filtrar receitas com base em tipo, restrição alimentar, dificuldade, tempo de preparo e pesquisa por nome.
+    """
+    def get(self, request):
+        tipo = request.query_params.get('tipo')
+        restricoes_alimentares = request.query_params.getlist('restricao_alimentar')  # Aceita múltiplos valores
+        dificuldade = request.query_params.get('dificuldade')
+        tempo_preparo = request.query_params.get('tempo_preparo')
+        tempo_preparo_operador = request.query_params.get('tempo_preparo_operador', 'menos')  # Padrão: "menor"
+        search = request.query_params.get('search')  # Campo de pesquisa para o título da receita
+
+        # Validação de tempo de preparo
+        if tempo_preparo:
+            try:
+                tempo_preparo = int(tempo_preparo)
+                tempo_preparo = timedelta(minutes=tempo_preparo)  # Converte minutos para timedelta
+            except ValueError:
+                raise ValidationError({"tempo_preparo": "O tempo de preparo deve ser um número inteiro representando minutos."})
+
+        # Construção do filtro dinâmico
+        filtros = Q()
+        if tipo:
+            filtros &= Q(tipo__iexact=tipo)
+        if restricoes_alimentares:
+            for restricao in restricoes_alimentares:
+                filtros &= Q(restricao_alimentar__icontains=restricao)
+        if dificuldade:
+            filtros &= Q(dificuldade__iexact=dificuldade)
+        if tempo_preparo:
+            if tempo_preparo_operador == "mais":
+                filtros &= Q(tempo_preparo__gte=tempo_preparo)
+            else:  # "menos" ou qualquer outro valor
+                filtros &= Q(tempo_preparo__lte=tempo_preparo)
+        if search:
+            filtros &= Q(titulo__icontains=search)  # Busca no título da receita
+
+        # Consulta ao banco de dados
+        receitas = Receita.objects.filter(filtros)
+        serializer = ReceitaSerializer(receitas, many=True)
+
+        return Response(serializer.data)
+
 # Views para a API de ReceitaIngrediente
 class ReceitaIngredienteListCreateAPIView(generics.ListCreateAPIView):
     queryset = ReceitaIngrediente.objects.all()
