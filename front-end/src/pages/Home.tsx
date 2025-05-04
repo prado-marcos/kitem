@@ -138,12 +138,12 @@ export default function Home() {
             title="Buscar"
             type="button"
             sx={{
-              backgroundColor: query.trim() ? "#D9D9D9" : "#f0f0f0", // Cor diferente quando desabilitado
-              "&:hover": query.trim() ? { backgroundColor: "#f0f0f0" } : undefined,
-              color: query.trim() ? "#000000" : "#a0a0a0", // Cor do texto desabilitada
+              backgroundColor: query.trim() || Object.values(selectedFilters).some((value) => value) ? "#D9D9D9" : "#f0f0f0", // Cor diferente quando habilitado/desabilitado
+              "&:hover": query.trim() || Object.values(selectedFilters).some((value) => value) ? { backgroundColor: "#f0f0f0" } : undefined,
+              color: query.trim() || Object.values(selectedFilters).some((value) => value) ? "#000000" : "#a0a0a0", // Cor do texto desabilitada
             }}
             variant="contained"
-            disabled={!query.trim()} // Desabilita o botão se o campo estiver vazio ou com espaços
+            disabled={!query.trim() && !Object.values(selectedFilters).some((value) => value)} // Habilita o botão se houver texto ou filtros selecionados
           >
             <Search className="size-5" />
           </Button>
@@ -196,7 +196,10 @@ function AdvancedSearch({
   setSelectedFilters: any;
 }) {
   function handleFilterChange(name: string, value: string) {
-    setSelectedFilters((prev: any) => ({ ...prev, [name]: value }));
+    setSelectedFilters((prev: any) => ({
+      ...prev,
+      [name]: prev[name] === value ? "" : value, // Desmarca se o mesmo valor for selecionado
+    }));
   }
 
   return (
@@ -213,31 +216,36 @@ function AdvancedSearch({
             label="Vegano"
             name="restricao"
             value="vegano"
-            onChange={handleFilterChange}
+              onChange={handleFilterChange}
+  selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Vegetariano"
             name="restricao"
             value="vegetariano"
-            onChange={handleFilterChange}
+              onChange={handleFilterChange}
+  selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Sem Glúten"
             name="restricao"
             value="sem-gluten"
-            onChange={handleFilterChange}
+              onChange={handleFilterChange}
+  selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Baixa Caloria"
             name="restricao"
             value="baixa-caloria"
-            onChange={handleFilterChange}
+              onChange={handleFilterChange}
+  selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Sem Lactose"
             name="restricao"
             value="sem-lactose"
-            onChange={handleFilterChange}
+              onChange={handleFilterChange}
+  selectedFilters={selectedFilters}
           />
         </Filter>
 
@@ -246,13 +254,15 @@ function AdvancedSearch({
             label="Doce"
             name="tipo"
             value="doce"
-            onChange={handleFilterChange}
+              onChange={handleFilterChange}
+  selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Salgado"
             name="tipo"
             value="salgado"
-            onChange={handleFilterChange}
+              onChange={handleFilterChange}
+  selectedFilters={selectedFilters}
           />
         </Filter>
 
@@ -261,25 +271,29 @@ function AdvancedSearch({
             label="Fácil"
             name="dificuldade"
             value="Fácil"
-            onChange={handleFilterChange}
+              onChange={handleFilterChange}
+  selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Médio"
             name="dificuldade"
             value="Médio"
-            onChange={handleFilterChange}
+              onChange={handleFilterChange}
+  selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Difícil"
             name="dificuldade"
             value="Difícil"
-            onChange={handleFilterChange}
+              onChange={handleFilterChange}
+  selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Master Chef"
             name="dificuldade"
             value="Master Chef"
-            onChange={handleFilterChange}
+              onChange={handleFilterChange}
+  selectedFilters={selectedFilters}
           />
         </Filter>
 
@@ -288,31 +302,36 @@ function AdvancedSearch({
             label="Menos de 20 min"
             name="tempo"
             value="20"
-            onChange={handleFilterChange}
+              onChange={handleFilterChange}
+  selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Menos de 30 min"
             name="tempo"
             value="30"
-            onChange={handleFilterChange}
+              onChange={handleFilterChange}
+  selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Menos de 40 min"
             name="tempo"
             value="40"
-            onChange={handleFilterChange}
+              onChange={handleFilterChange}
+  selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Menos de 1h"
             name="tempo"
             value="60"
-            onChange={handleFilterChange}
+              onChange={handleFilterChange}
+  selectedFilters={selectedFilters}
           />
           {/* <FilterOption
             label="Mais de 1h"
             name="tempo"
             value="61"
-            onChange={handleFilterChange}
+              onChange={handleFilterChange}
+  selectedFilters={selectedFilters}
           /> */}
         </Filter>
       </div>
@@ -329,15 +348,22 @@ function Filter({ label, children }: FilterProps) {
   );
 }
 
-function FilterOption({ label, name, value, onChange }: FilterOptionProps) {
+function FilterOption({
+  label,
+  name,
+  value,
+  onChange,
+  selectedFilters,
+}: FilterOptionProps & { selectedFilters: any }) {
   return (
     <label className="cursor-pointer">
       <input
-        type="radio"
+        type="checkbox" // Alterado para checkbox para permitir desmarcar
         name={name}
         value={value}
         className="peer hidden"
         onChange={() => onChange(name, value)}
+        checked={selectedFilters[name] === value} // Marca o botão se o valor corresponder ao estado
       />
       <div className="px-4 py-2 rounded bg-gray-200 peer-checked:bg-gray-500 peer-checked:text-white transition-all">
         {label}
