@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import api from "../services/api";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import SentimentDissatisfiedIcon from '@mui/icons-material/SentimentDissatisfied';
+import { useNavigate } from "react-router-dom";
 
 const altImage = "https://freesvg.org/img/mealplate.png";
 
@@ -20,6 +21,7 @@ export default function RecipeList() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const location = useLocation();
+  const navigate = useNavigate(); // Mova o useNavigate para o corpo do componente
 
   useEffect(() => {
     async function fetchRecipes() {
@@ -28,7 +30,7 @@ export default function RecipeList() {
         const searchParams = new URLSearchParams(location.search);
         const query = searchParams.get("busca") || "";
         setSearchQuery(query);
-        
+
         let response;
         if (searchParams.toString()) {
           response = await api.get(`/receitas/filtrar/?${searchParams.toString()}`);
@@ -44,7 +46,7 @@ export default function RecipeList() {
           viewCount: recipe.quantidade_visualizacao,
           difficulty: recipe.dificuldade,
         }));
-        
+
         setRecipes(formattedRecipes);
       } catch (error) {
         console.error("Erro ao buscar receitas:", error);
@@ -59,9 +61,16 @@ export default function RecipeList() {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <CircularProgress />
-      </Box>
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
+        <CircularProgress
+          style={{ color: "#9e000e" }} // Cor personalizada
+          size={64} // Tamanho do spinner
+          thickness={4} // Espessura do spinner
+        />
+        <p className="mt-4 text-lg font-semibold text-gray-600">
+          Carregando receitas, por favor aguarde...
+        </p>
+      </div>
     );
   }
 
@@ -70,9 +79,9 @@ export default function RecipeList() {
       <h1 className="text-3xl font-bold mb-6">
         {searchQuery ? `Resultados para "${searchQuery}"` : "Receitas Encontradas"}
       </h1>
-      
+
       {recipes.length === 0 ? (
-        <Box 
+        <Box
           sx={{
             display: "flex",
             flexDirection: "column",
@@ -80,28 +89,42 @@ export default function RecipeList() {
             justifyContent: "center",
             minHeight: "300px",
             textAlign: "center",
-            gap: 2
+            gap: 2,
+            padding: "16px",
           }}
         >
-          <SentimentDissatisfiedIcon sx={{ fontSize: 60, color: "text.secondary" }} />
-          <Typography variant="h5" color="text.secondary">
+          <SentimentDissatisfiedIcon sx={{ fontSize: 80, color: "#9e000e" }} />
+          <Typography variant="h4" color="text.primary" fontWeight="bold">
             Nenhuma receita encontrada
           </Typography>
           {searchQuery && (
-            <Typography variant="body1">
-              Não encontramos resultados para "{searchQuery}". Tente ajustar sua busca.
+            <Typography variant="body1" color="text.secondary">
+              Não encontramos resultados para <strong>"{searchQuery}"</strong>. Tente ajustar sua busca ou verificar a ortografia.
             </Typography>
           )}
-          <Typography variant="body1">
-            <Link to="/" className="text-blue-500 hover:underline">
-              Voltar para a página inicial
-            </Link>
+          <Typography variant="body1" color="text.secondary">
+            Explore outras receitas ou volte para a página inicial.
           </Typography>
+          <button
+            onClick={() => navigate("/")} // Use navigate aqui
+            className="mt-6 px-6 py-2 text-white font-semibold rounded-md shadow-md transition-transform transform hover:scale-105"
+            style={{
+              backgroundColor: "#9e000e", // Cor principal
+              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)", // Sombra
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#7c000b")}
+            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#9e000e")}
+          >
+            Voltar
+          </button>
         </Box>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {recipes.map((recipe) => (
-            <div key={recipe.id} className="bg-white shadow rounded overflow-hidden hover:shadow-lg transition-shadow">
+            <div
+              key={recipe.id}
+              className="bg-white shadow rounded overflow-hidden hover:shadow-lg transition-shadow"
+            >
               <Link to={`/receita/${recipe.id}`}>
                 <img
                   src={recipe.imageUrl}

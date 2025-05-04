@@ -126,6 +126,11 @@ export default function Home() {
             placeholder="Buscar..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && query.trim()) {
+                handleSearch(); // Chama a função de busca ao pressionar Enter
+              }
+            }}
             className="bg-white rounded-sm px-2 py-1 w-100"
           />
           <Button
@@ -133,11 +138,12 @@ export default function Home() {
             title="Buscar"
             type="button"
             sx={{
-              backgroundColor: "#D9D9D9",
-              "&:hover": { backgroundColor: "#f0f0f0" },
-              color: "#000000",
+              backgroundColor: query.trim() ? "#D9D9D9" : "#f0f0f0", // Cor diferente quando desabilitado
+              "&:hover": query.trim() ? { backgroundColor: "#f0f0f0" } : undefined,
+              color: query.trim() ? "#000000" : "#a0a0a0", // Cor do texto desabilitada
             }}
             variant="contained"
+            disabled={!query.trim()} // Desabilita o botão se o campo estiver vazio ou com espaços
           >
             <Search className="size-5" />
           </Button>

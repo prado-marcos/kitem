@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Heart, Share2 } from "lucide-react";
 import api from "../services/api";
+import { useNavigate } from "react-router-dom";
+import { Box, CircularProgress, Typography } from "@mui/material";
 
 interface IngredienteRecipeProps {
   quantity: number;
@@ -63,13 +65,50 @@ export default function Recipe() {
   function handleFavorite() {
     setFavorite(!isFavorite);
   }
-
+  const navigate = useNavigate();
   if (loading) {
-    return <div>Carregando...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
+        <CircularProgress
+          style={{ color: "#9e000e" }} // Cor personalizada
+          size={64} // Tamanho do spinner
+          thickness={4} // Espessura do spinner
+        />
+        <p className="mt-4 text-lg font-semibold text-gray-600">
+          Carregando receita, por favor aguarde...
+        </p>
+      </div>
+    );
   }
-
+  
   if (!recipe) {
-    return <div>Receita não encontrada</div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
+        <img
+          src="https://png.pngtree.com/png-clipart/20231019/original/pngtree-cartoon-style-school-magnifier-png-image_13358501.png"
+          alt="Receita não encontrada"
+          className="w-64 h-64 object-contain"
+        />
+        <h1 className="mt-4 text-3xl font-bold text-gray-800">
+          Receita não encontrada
+        </h1>
+        <p className="mt-2 text-lg text-gray-600">
+          Desculpe, não conseguimos encontrar a receita que você está procurando.
+        </p>
+        <button
+          onClick={() => navigate("/")}
+          className="mt-6 px-6 py-2 text-white font-semibold rounded-md shadow-md transition-transform transform hover:scale-105"
+          style={{
+            backgroundColor: "#9e000e", // Cor principal
+            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)", // Sombra
+          }}
+          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#7c000b")} // Hover mais escuro
+          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#9e000e")} // Voltar ao normal
+        >
+          Voltar
+        </button>
+      </div>
+    );
   }
 
   const ingredientsArr = recipe.ingredientRecipe.map((el, index) => (
