@@ -47,7 +47,7 @@ export default function RecipeCarousel({
           {recipes.map((recipe) => (
             <SwiperSlide key={recipe.id}>
               <div className="bg-white shadow rounded overflow-hidden">
-                <a href="#">
+                <a href={"/receitas/" + recipe.id}>
                   <img
                     src={recipe.imageUrl}
                     alt={recipe.title}
@@ -56,10 +56,9 @@ export default function RecipeCarousel({
                 </a>
                 <div className="p-4">
                   <h3 className="text-lg font-semibold">{recipe.title}</h3>
-                  <p className="mt-2 font-bold">{recipe.rating} estrelas</p>
+                  {/* <p className="mt-2 font-bold">{recipe.viewCount} estrelas</p> */}
                   <p className="mt-2 ">
-                    Tempo de preparo: {recipe.time} | Dificuldade:{" "}
-                    {recipe.difficulty}
+                    {recipe.time} min | Dificuldade: {recipe.difficulty}
                   </p>
                 </div>
               </div>

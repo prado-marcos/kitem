@@ -1,15 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import homeBanner from "../assets/home_banner.png";
 import { Search, ChevronUp, ChevronDown } from "lucide-react";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation } from "swiper/modules";
+import RecipeCarousel from "../components/RecipeCarousel";
 // @ts-expect-error importe funciona normalmente
 import "swiper/css";
 // @ts-expect-error importe funciona normalmente
 import "swiper/css/navigation";
-import { Button } from "@mui/material";
-
+import { Box, Button, CircularProgress } from "@mui/material";
+import api from "../services/api";
+const altImage = "https://freesvg.org/img/mealplate.png";
 interface FilterProps {
   label: string;
   children: React.ReactNode;
@@ -26,54 +26,40 @@ interface RecipeProps {
   title: string;
   imageUrl: string;
   time: string;
-  rating: number;
+  viewCount: number;
   difficulty: string;
 }
-
-interface RecipeCarouselProps {
-  title: string;
-  subTitle: string;
-  recipes: RecipeProps[];
-}
-
-const recipes: RecipeProps[] = [
-  {
-    id: 1,
-    title: "Pasta Carbonara",
-    imageUrl: "/assets/pasta.jpg",
-    time: "30 mins",
-    rating: 4.5,
-    difficulty: "Fácil",
-  },
-  {
-    id: 2,
-    title: "Salmão Grelhado",
-    imageUrl: "/assets/salmao.jpg",
-    time: "20 mins",
-    rating: 4.8,
-    difficulty: "Fácil",
-  },
-  {
-    id: 3,
-    title: "Torrada de abacate",
-    imageUrl: "/assets/torrada.jpg",
-    time: "10 mins",
-    rating: 4.7,
-    difficulty: "Fácil",
-  },
-  {
-    id: 4,
-    title: "Risoto de Cogumelos",
-    imageUrl: "/assets/risoto.jpg",
-    time: "40 mins",
-    rating: 4.6,
-    difficulty: "Fácil",
-  },
-];
 
 export default function Home() {
   const [query, setQuery] = useState("");
   const [toggleAdvancedSearch, setToggleAdvancedSearch] = useState(false);
+  const [recipes, setRecipes] = useState<RecipeProps[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchRecipes() {
+      try {
+        const response = await api.get("/receitas");
+        const formattedRecipes = response.data.map((recipe: any) => ({
+          id: recipe.id,
+          title: recipe.titulo,
+          imageUrl: recipe?.url_imagem || altImage ,
+          // imageUrl: recipe.url_imagem,
+          time: converterHoraParaMinutos(recipe.tempo_preparo),
+          viewCount: recipe.quantidade_visualizacao, // A API não retorna viewCount, então definimos um valor padrão
+          difficulty: recipe.dificuldade,
+        }));
+        setRecipes(formattedRecipes);
+      } catch (error) {
+        console.error("Erro ao buscar receitas:", error);
+        setRecipes([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchRecipes();
+  }, []);
 
   function handleSearch() {
     console.log(query);
@@ -81,6 +67,14 @@ export default function Home() {
 
   function handleAdvancedSearch(toggleButton: boolean) {
     setToggleAdvancedSearch(toggleButton);
+  }
+
+  if (loading) {
+    return (
+      <Box sx={{ display: "flex flex-col items-center" }}>
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (
@@ -141,7 +135,7 @@ export default function Home() {
       <RecipeCarousel
         title="Receitas Populares"
         subTitle="Explore as mais acessadas"
-        recipes={recipes}
+        recipes={recipes.toSorted((a,b) => b.viewCount - a.viewCount)}
       />
       <RecipeCarousel
         title="Sugestões de receitas"
@@ -246,52 +240,67 @@ function FilterOption({ label, name, value }: FilterOptionProps) {
   );
 }
 
-function RecipeCarousel({
-  title,
-  subTitle,
-  recipes = [],
-}: RecipeCarouselProps) {
-  // function RecipeCarousel({ title, subTitle, recipes }: RecipeCarousel) {
-  return (
-    <div className="w-full flex flex-col items-center py-10">
-      <h2 className="text-4xl font-bold mb-2">{title}</h2>
-      <p className="text-gray-600 mb-6">{subTitle}</p>
+// function RecipeCarousel({
+//   title,
+//   subTitle,
+//   recipes = [],
+// }: RecipeCarouselProps) {
+//   // function RecipeCarousel({ title, subTitle, recipes }: RecipeCarousel) {
+//   return (
+//     <div className="w-full flex flex-col items-center py-10">
+//       <h2 className="text-4xl font-bold mb-2">{title}</h2>
+//       <p className="text-gray-600 mb-6">{subTitle}</p>
 
-      <div className="w-full max-w-6xl">
-        <Swiper
-          modules={[Navigation]}
-          navigation
-          spaceBetween={20}
-          slidesPerView={3}
-          breakpoints={{
-            0: { slidesPerView: 1 },
-            640: { slidesPerView: 2 },
-            1024: { slidesPerView: 3 },
-          }}
-          className="pb-8"
-        >
-          {recipes.map((recipe) => (
-            <SwiperSlide key={recipe.id}>
-              <div className="bg-white shadow rounded overflow-hidden">
-                <a href="#">
-                  <img
-                    src={recipe.imageUrl}
-                    alt={recipe.title}
-                    className="w-full h-64 object-cover"
-                  />
-                </a>
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold">{recipe.title}</h3>
-                  <p className="mt-2 font-bold">{recipe.rating} estrelas</p>
-                  <p className="mt-2 ">
-                    {recipe.time} | Dificuldade: {recipe.difficulty}
-                  </p>
-                </div>
-              </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
-      </div>
-    </div>
-  );
+//       <div className="w-full max-w-6xl">
+//         <Swiper
+//           modules={[Navigation]}
+//           navigation
+//           spaceBetween={20}
+//           slidesPerView={3}
+//           breakpoints={{
+//             0: { slidesPerView: 1 },
+//             640: { slidesPerView: 2 },
+//             1024: { slidesPerView: 3 },
+//           }}
+//           className="pb-8"
+//         >
+//           {recipes.map((recipe) => (
+//             <SwiperSlide key={recipe.id}>
+//               <div className="bg-white shadow rounded overflow-hidden">
+//                 <a href="#">
+//                   <img
+//                     src={recipe.imageUrl}
+//                     alt={recipe.title}
+//                     className="w-full h-64 object-cover"
+//                   />
+//                 </a>
+//                 <div className="p-4">
+//                   <h3 className="text-lg font-semibold">{recipe.title}</h3>
+//                   {/* <p className="mt-2 font-bold">{recipe.viewCount} estrelas</p> */}
+//                   <p className="mt-2 ">
+//                     {recipe.time} min | Dificuldade: {recipe.difficulty}
+//                   </p>
+//                 </div>
+//               </div>
+//             </SwiperSlide>
+//           ))}
+//         </Swiper>
+//       </div>
+//     </div>
+//   );
+// }
+
+function converterHoraParaMinutos(hora: string): number {
+  // Divide a string em partes usando ':' como separador
+  const partes = hora.split(':');
+  
+  // Converte cada parte para número
+  const horas = parseInt(partes[0], 10);
+  const minutos = parseInt(partes[1], 10);
+  const segundos = partes[2] ? parseInt(partes[2], 10) : 0; // Caso não tenha segundos
+  
+  // Calcula o total de minutos (arredondando os segundos para minutos)
+  const totalMinutos = horas * 60 + minutos + Math.round(segundos / 60);
+  
+  return totalMinutos;
 }
