@@ -15,6 +15,9 @@ from rest_framework.decorators import api_view
 from django.contrib.auth.models import User as Usuario
 from django.db.models import Count
 from rest_framework.views import APIView
+from rest_framework.exceptions import ValidationError
+from django.db.models import Q
+from datetime import timedelta
 
 class UsuarioListCreateAPIView(generics.ListCreateAPIView):
     queryset = Usuario.objects.all()
