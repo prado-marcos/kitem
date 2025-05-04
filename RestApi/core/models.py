@@ -12,7 +12,7 @@ class Receita(models.Model):
     dificuldade = models.CharField(max_length=25, null=False)
     tipo = models.CharField(max_length=25, null=True)
     restricao_alimentar = models.CharField(max_length=25, null=True)
-    imagem = models.CharField(max_length=600, null=True)
+    imagem = models.URLField(max_length=600, null=True)
     quantidade_visualizacao = models.IntegerField(default=0, null=False)
 
 
