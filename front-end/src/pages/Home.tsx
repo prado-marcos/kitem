@@ -102,9 +102,16 @@ export default function Home() {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex flex-col items-center" }}>
-        <CircularProgress />
-      </Box>
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
+        <CircularProgress
+          style={{ color: "#9e000e" }} // Cor personalizada
+          size={64} // Tamanho do spinner
+          thickness={4} // Espessura do spinner
+        />
+        <p className="mt-4 text-lg font-semibold text-gray-600">
+          Carregando receitas, por favor aguarde...
+        </p>
+      </div>
     );
   }
 
