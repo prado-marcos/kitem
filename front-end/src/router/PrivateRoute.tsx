@@ -8,7 +8,6 @@ interface PrivateRouteProps {
 
 function PrivateRoute({ children }: PrivateRouteProps) {
   const { isAuthenticated } = useAuth();
-  console.log("🚀 ~ PrivateRoute ~ isAuthenticated:", isAuthenticated);
 
   return isAuthenticated ? children : <Navigate to="/login" />;
 }

@@ -4,36 +4,46 @@ import api from "../services/api";
 
 export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return Boolean(localStorage.getItem("accessToken"));
+    return !!localStorage.getItem("accessToken");
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    // Verificação inicial
+    const token = localStorage.getItem("accessToken");
+    setIsAuthenticated(!!token);
+    setIsLoading(false);
 
-    if (token) {
-      setIsAuthenticated(true);
-    } else {
-      setIsLoading(false);
-    }
+    // Listener para mudanças no localStorage
+    const handleStorageChange = () => {
+      const newToken = localStorage.getItem("accessToken");
+      setIsAuthenticated(!!newToken);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  async function login(userName: string, password: string) {
+  async function login(username: string, password: string) {
     try {
-      const response = await api.post("/auth/login/", {
-        username: userName,
-        password,
-      });
-      const { access, refresh } = response.data;
+      // Limpa tokens antigos
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
 
+      const response = await api.post("/auth/login/", { username, password });
+
+      const { access, refresh } = response.data;
       localStorage.setItem("accessToken", access);
       localStorage.setItem("refreshToken", refresh);
 
       setIsAuthenticated(true);
-      navigate("/minhas-receitas");
+      navigate("/gerenciamento-receitas");
+      window.location.reload();
+      return true;
     } catch (error) {
       console.error("Login failed:", error);
+      logout();
       return false;
     }
   }
@@ -42,7 +52,7 @@ export function useAuth() {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     setIsAuthenticated(false);
-    navigate("/");
+    navigate("/login");
   }
 
   return { isAuthenticated, isLoading, login, logout };

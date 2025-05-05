@@ -8,6 +8,7 @@ import Layout from "../pages/Layout";
 import RecipeList from "../pages/RecipeList";
 import RecipeManagement from "../pages/RecipeManagement";
 import PrivateRoute from "./PrivateRoute";
+import UpdateRegister from "../pages/UpdateRegister";
 
 function AppRouter() {
   return (
@@ -20,10 +21,18 @@ function AppRouter() {
           <Route path="/receita/:id" element={<Recipe />} />
           <Route path="/receitas" element={<RecipeList />} />
           <Route
-            path="/minhas-receitas"
+            path="/gerenciamento-receitas"
             element={
               <PrivateRoute>
                 <RecipeManagement />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/editar-cadastro"
+            element={
+              <PrivateRoute>
+                <UpdateRegister />
               </PrivateRoute>
             }
           />

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ChefHat, CircleUserRound } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "../hooks/useAuth";
 
 export default function Nav() {
   return (
@@ -12,19 +13,15 @@ export default function Nav() {
 }
 
 function Profile() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { isAuthenticated, logout } = useAuth();
 
-  // Verificar autenticação (exemplo - substitua por sua lógica real)
+  // Fecha o dropdown quando a autenticação muda
   useEffect(() => {
-    // Aqui você verificaria se o usuário está autenticado
-    // Por exemplo, verificando um token no localStorage
-    const token = localStorage.getItem("authToken");
-    setIsAuthenticated(!!token);
-  }, []);
+    setIsDropdownOpen(false);
+  }, [isAuthenticated]);
 
-  // Fechar dropdown ao clicar fora
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -42,11 +39,7 @@ function Profile() {
   }, []);
 
   const handleLogout = () => {
-    // Lógica para deslogar o usuário
-    localStorage.removeItem("authToken");
-    setIsAuthenticated(false);
-    setIsDropdownOpen(false);
-    // Redirecionar para a página inicial se necessário
+    logout();
   };
 
   return (
@@ -89,12 +82,19 @@ function Profile() {
                 Gerenciamento de Receitas
               </Link>
               <Link
+                to="/editar-cadastro"
+                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                onClick={() => setIsDropdownOpen(false)}
+              >
+                Editar Cadastro
+              </Link>
+              {/* <Link
                 to="/lista-compras"
                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 onClick={() => setIsDropdownOpen(false)}
               >
                 Lista de Compras
-              </Link>
+              </Link> */}
               <button
                 onClick={handleLogout}
                 className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

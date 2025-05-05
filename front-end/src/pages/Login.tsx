@@ -4,7 +4,6 @@ import loginBanner from "../assets/login_banner.jpg";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import api from "../services/api";
 
 interface FormData {
   userName: string;
@@ -66,7 +65,6 @@ export default function Login() {
       setSnackBarMessage("Login realizado com sucesso!");
       setSnackBarSeverity("success");
       setSnackBarOpen(true);
-      // navigate("/");
     } catch (error) {
       setSnackBarMessage("Falha no login");
       setSnackBarOpen(true);
