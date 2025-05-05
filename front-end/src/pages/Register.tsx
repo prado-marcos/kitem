@@ -4,11 +4,6 @@ import registerBanner from "../assets/register_banner.jpg";
 import { Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
-
-interface RegisterProps {
-  onSwitchToLogin: () => void;
-}
-
 interface FormData {
   firstName: string;
   lastName: string;
@@ -25,7 +20,7 @@ interface FormErrors {
   userName?: string;
 }
 
-export default function Register({ onSwitchToLogin }: RegisterProps) {
+export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
@@ -195,7 +190,6 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
           <Button
             type="button"
             className="w-[50%]"
-            onClick={onSwitchToLogin}
             sx={{
               backgroundColor: "#ffffff",
               "&:hover": { backgroundColor: "#f0f0f0" },

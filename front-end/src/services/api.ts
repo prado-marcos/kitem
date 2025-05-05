@@ -1,23 +1,32 @@
-import axios from 'axios';
+import axios from "axios";
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: "http://localhost:8000/api",
   headers: {
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
+    "Content-Type": "application/json",
+    Accept: "application/json",
   },
-  withCredentials: true,  // Adicione esta linha se usar autenticação
+  withCredentials: true,
 });
 
-// // Opcional: Log de erros de rede para debug
-// api.interceptors.response.use(
-//   response => response,
-//   error => {
-//     if (error.message === 'Network Error') {
-//       console.error('Erro de rede! Verifique se o servidor Django está rodando e o CORS está configurado.');
-//     }
-//     return Promise.reject(error);
-//   }
-// );
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("accessToken");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Trata erros de autenticação
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;

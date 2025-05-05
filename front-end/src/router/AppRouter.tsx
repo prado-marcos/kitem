@@ -6,7 +6,8 @@ import Recipe from "../pages/Recipe";
 import NotFoundPage from "../pages/NotFound";
 import Layout from "../pages/Layout";
 import RecipeList from "../pages/RecipeList";
-// import PrivateRoute from './PrivateRoute';
+import RecipeManagement from "../pages/RecipeManagement";
+import PrivateRoute from "./PrivateRoute";
 
 function AppRouter() {
   return (
@@ -18,6 +19,14 @@ function AppRouter() {
           <Route path="/cadastro" element={<Register />} />
           <Route path="/receita/:id" element={<Recipe />} />
           <Route path="/receitas" element={<RecipeList />} />
+          <Route
+            path="/minhas-receitas"
+            element={
+              <PrivateRoute>
+                <RecipeManagement />
+              </PrivateRoute>
+            }
+          />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
