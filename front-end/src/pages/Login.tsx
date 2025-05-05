@@ -88,6 +88,7 @@ export default function Login({ onLogin }: LoginProps) {
         className="max-w-md h-auto object-cover rounded-sm"
       />
       <form onSubmit={handleSubmit}>
+        <h1 className="text-4xl font-bold text-black mb-4">Login</h1>
         <TextField
           name="email"
           label="Email"

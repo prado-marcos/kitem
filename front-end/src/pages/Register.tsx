@@ -120,6 +120,7 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
   return (
     <Box className="flex flex-row flex-center justify-evenly items-center my-12">
       <form className="flex flex-col" onSubmit={handleSubmit}>
+        <h1 className="text-4xl font-bold text-black mb-4">Criar conta</h1>
         <TextField
           name="userName"
           label="Nome de Usuário"
@@ -214,7 +215,7 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
               color: "#ffffff",
             }}
           >
-            Cadastrar
+            Criar conta
           </Button>
         </Box>
       </form>
