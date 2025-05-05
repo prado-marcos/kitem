@@ -188,8 +188,7 @@ export default function RecipeRegister({
       valid = false;
     }
     if (!formData.restricao_alimentar) {
-      newErrors.restricao_alimentar = "Selecione a restrição";
-      valid = false;
+      newErrors.restricao_alimentar = ""; // Remove a mensagem de erro para restrição alimentar
     }
     if (!formData.tipo) {
       newErrors.tipo = "Selecione o tipo de comida";
@@ -213,17 +212,19 @@ export default function RecipeRegister({
         throw new Error("Usuário não autenticado");
       }
 
-      // Criar a receita
-      const recipeResponse = await api.post("/receitas/", {
-        titulo: formData.titulo,
-        descricao: formData.descricao,
+      const payload = {
+        titulo: formData.titulo || null,
+        descricao: formData.descricao || null,
         tempo_preparo: formData.tempo_preparo || null,
-        dificuldade: formData.dificuldade,
-        tipo: formData.tipo,
-        restricao_alimentar: formData.restricao_alimentar,
-        imagem: formData.imagem,
+        dificuldade: formData.dificuldade || null,
+        tipo: formData.tipo || null,
+        restricao_alimentar: formData.restricao_alimentar || null,
+        imagem: formData.imagem || null,
         id_usuario: parseInt(userId),
-      });
+      };
+
+      // Criar a receita
+      const recipeResponse = await api.post("/receitas/", payload);
 
       const recipeId = recipeResponse.data.id;
 
