@@ -255,6 +255,22 @@ class FavoritoRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView
         except Exception as e:
             raise NotFound(detail=f"Erro inesperado: {str(e)}")
 
+class ReceitasFavoritasAPIView(APIView):
+    def get(self, request, id_usuario):
+        try:
+            # Filtra os favoritos pelo id_usuario
+            favoritos = Favorito.objects.filter(id_usuario=id_usuario).select_related('id_receita')
+            
+            if not favoritos.exists():
+                return Response({"message": "Nenhuma receita favorita encontrada para este usuário."}, status=404)
+
+            # Obtém as receitas favoritas
+            receitas = [favorito.id_receita for favorito in favoritos]
+            serializer = ReceitaSerializer(receitas, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response({"error": f"Erro ao buscar receitas favoritas: {str(e)}"}, status=500)
+
 # Views para a API de Lista de Compras
 class ListaComprasListCreateAPIView(generics.ListCreateAPIView):
     queryset = ListaCompras.objects.all()
@@ -297,17 +313,24 @@ def api_root(request):
             "refresh": "/auth/refresh/",
             "usuarios": "/usuarios/",
             "usuario": "/usuarios/<int:pk>/",
+            "usuarios_favoritos": "/usuarios/<int:id_usuario>/favoritos/",
             "ingredientes": "/ingredientes/",
             "ingrediente": "/ingredientes/<int:pk>/",
             "receitas": "/receitas/",
             "receita": "/receitas/<int:pk>/",
-            "receita_ingredientes": "/receitas_ingredientes/",
-            "receita_ingrediente": "/receitas_ingredientes/<int:pk>/",
+            "receitas_usuario": "/receitas/usuario/<int:user_id>/",
+            "receita_detalhada": "/receitas/<int:pk>/detalhada/",
+            "receitas_filtrar": "/receitas/filtrar/",
+            "receitas_mais_acessadas": "/receitas/mais-acessadas/",
+            "receitas_aleatorias": "/receitas/aleatorias/",
+            "receita_ingredientes": "/receita_ingredientes/",
+            "receita_ingrediente": "/receita_ingredientes/<int:pk>/",
             "favoritos": "/favoritos/",
             "favorito": "/favoritos/<int:pk>/",
             "listas_compras": "/listas_compras/",
             "lista_compras": "/listas_compras/<int:pk>/",
             "listas_compras_ingredientes": "/listas_compras_ingredientes/",
+            "lista_compras_ingrediente": "/listas_compras_ingredientes/<int:pk>/",
         }
     })
 

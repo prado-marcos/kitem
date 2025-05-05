@@ -1,7 +1,7 @@
 from django.urls import path
 from . import views_api  # Importa as views do arquivo views_api.py
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views_api import CustomTokenObtainPairView, GetReceitaUsuario, ReceitaMaisAcessadasAPIView, ReceitaAleatoriaAPIView
+from .views_api import CustomTokenObtainPairView, GetReceitaUsuario, ReceitaMaisAcessadasAPIView, ReceitaAleatoriaAPIView, ReceitasFavoritasAPIView
 
 urlpatterns = [
     # API Root (opcional, pode ser removido se não for necessário)
@@ -15,6 +15,8 @@ urlpatterns = [
     # URLs para Usuários
     path('usuarios/', views_api.UsuarioListCreateAPIView.as_view(), name='usuario-list-create'),
     path('usuarios/<int:pk>/', views_api.UsuarioRetrieveUpdateDestroyAPIView.as_view(), name='usuario-detail'),
+    # URL para obter receitas favoritas de um usuário específico
+    path('usuarios/<int:id_usuario>/favoritos/', ReceitasFavoritasAPIView.as_view(), name='receitas-favoritas'),
 
     # URLs para Ingredientes
     path('ingredientes/', views_api.IngredienteListCreateAPIView.as_view(), name='ingrediente-list-create'),
