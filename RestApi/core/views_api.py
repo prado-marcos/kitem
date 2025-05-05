@@ -18,6 +18,7 @@ from rest_framework.views import APIView
 from rest_framework.exceptions import ValidationError
 from django.db.models import Q
 from datetime import timedelta
+from random import sample
 
 class UsuarioListCreateAPIView(generics.ListCreateAPIView):
     queryset = Usuario.objects.all()
@@ -109,10 +110,10 @@ class ReceitaFilterAPIView(APIView):
         tempo_preparo = request.query_params.get('tempo_preparo')
         tempo_preparo_operador = request.query_params.get('tempo_preparo_operador', 'menos')  # Padrão: "menos"
         search = request.query_params.get('search')  # Campo de pesquisa para o título da receita
-
+        ingredientes = request.query_params.getlist('ingredientes')  # Aceita múltiplos valores para ingredientes
         # Validações
         valid_tipos = ["doce", "salgado"]
-        valid_dificuldades = ["Fácil", "Médio", "Difícil", "Master Chef"]
+        valid_dificuldades = ["Fácil", "Média", "Difícil", "Master Chef"]
         valid_operadores = ["mais", "menos"]
 
         if tipo and tipo not in valid_tipos:
@@ -137,25 +138,45 @@ class ReceitaFilterAPIView(APIView):
         # Construção do filtro dinâmico
         filtros = Q()
         if tipo:
-            filtros &= Q(tipo__iexact=tipo)
+            filtros &= Q(tipo__iexact=tipo)  # Combina com AND lógico
         if restricoes_alimentares:
             restricoes_query = Q()
             for restricao in restricoes_alimentares:
-                restricoes_query |= Q(restricao_alimentar__icontains=restricao)
-            filtros &= restricoes_query
+                restricoes_query |= Q(restricao_alimentar__icontains=restricao)  # Combina com OR lógico
+            filtros &= restricoes_query  # Adiciona ao filtro principal com AND lógico
         if dificuldade:
             filtros &= Q(dificuldade__iexact=dificuldade)
         if tempo_preparo:
-            if tempo_preparo_operador == "mais":
-                filtros &= Q(tempo_preparo__gte=tempo_preparo)
-            elif tempo_preparo_operador == "menos":
-                filtros &= Q(tempo_preparo__lte=tempo_preparo)
+            try:
+                horas, minutos, _ = map(int, tempo_preparo.split(':'))
+                tempo_preparo_minutos = horas * 60 + minutos
+                if tempo_preparo_minutos == 20:
+                    filtros &= Q(tempo_preparo__lte="00:20:00")
+                elif tempo_preparo_minutos == 30:
+                    filtros &= Q(tempo_preparo__gt="00:20:00", tempo_preparo__lte="00:30:00")
+                elif tempo_preparo_minutos == 40:
+                    filtros &= Q(tempo_preparo__gt="00:30:00", tempo_preparo__lte="00:40:00")
+                elif tempo_preparo_minutos == 60:
+                    filtros &= Q(tempo_preparo__gt="00:40:00", tempo_preparo__lte="01:00:00")
+                elif tempo_preparo_minutos > 60:
+                    filtros &= Q(tempo_preparo__gt="01:00:00")
+            except ValueError:
+                raise ValidationError({"tempo_preparo": "O tempo de preparo deve ser um número inteiro representando minutos."})
+        if ingredientes:
+            ingredientes_query = Q()
+            for ingrediente in ingredientes:
+                ingredientes_query |= Q(ingredientes__id_ingrediente__nome__icontains=ingrediente)  # Combina com OR lógico
+            filtros &= ingredientes_query  # Adiciona ao filtro principal com AND lógico
         if search:
             filtros &= Q(titulo__icontains=search)  # Busca no título da receita
 
+        # Log para depuração
+        print(f"Ingredientes recebidos: {ingredientes}")
+        print(f"Filtros aplicados: {filtros}")
+
         # Consulta ao banco de dados
         try:
-            receitas = Receita.objects.filter(filtros).select_related('id_usuario')
+            receitas = Receita.objects.filter(filtros).select_related('id_usuario').distinct()
         except Exception as e:
             raise ValidationError({"error": f"Erro ao consultar receitas: {str(e)}"})
 
@@ -164,6 +185,31 @@ class ReceitaFilterAPIView(APIView):
 
         serializer = ReceitaSerializer(receitas, many=True)
         return Response(serializer.data)
+
+class ReceitaMaisAcessadasAPIView(APIView):
+    """
+    Endpoint para listar as receitas mais acessadas.
+    """
+    def get(self, request):
+        try:
+            receitas = Receita.objects.all().order_by('-quantidade_visualizacao')
+            serializer = ReceitaSerializer(receitas, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response({"error": f"Erro ao buscar receitas mais acessadas: {str(e)}"}, status=500)
+
+class ReceitaAleatoriaAPIView(APIView):
+    """
+    Endpoint para listar receitas aleatórias.
+    """
+    def get(self, request):
+        try:
+            receitas = list(Receita.objects.all())
+            random_receitas = sample(receitas, min(len(receitas), 10))  # Seleciona até 10 receitas aleatórias
+            serializer = ReceitaSerializer(random_receitas, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response({"error": f"Erro ao buscar receitas aleatórias: {str(e)}"}, status=500)
 
 # Views para a API de ReceitaIngrediente
 class ReceitaIngredienteListCreateAPIView(generics.ListCreateAPIView):

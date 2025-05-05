@@ -10,6 +10,7 @@ import "swiper/css/navigation";
 import { Box, Button, CircularProgress } from "@mui/material";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
+import Select, { MultiValue, components, ValueContainerProps, GroupBase } from "react-select";
 
 const altImage = "https://freesvg.org/img/mealplate.png";
 
@@ -32,6 +33,7 @@ interface RecipeProps {
   time: string;
   viewCount: number;
   difficulty: string;
+  rating?: number;
 }
 
 export default function Home() {
@@ -39,6 +41,7 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [toggleAdvancedSearch, setToggleAdvancedSearch] = useState(false);
   const [recipes, setRecipes] = useState<RecipeProps[]>([]);
+  const [recipes_random, setRecipes_Random] = useState<RecipeProps[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [selectedFilters, setSelectedFilters] = useState({
@@ -47,6 +50,30 @@ export default function Home() {
     dificuldade: "",
     tempo: "",
   });
+
+  const [ingredients, setIngredients] = useState<MultiValue<{ value: string; label: string }>>([]);
+  const [selectedIngredients, setSelectedIngredients] = useState<MultiValue<{ value: string; label: string }>>([]);
+  const CustomValueContainer = <
+    OptionType,
+    IsMulti extends boolean = true
+  >(
+    props: ValueContainerProps<OptionType, IsMulti, GroupBase<OptionType>>
+  ) => {
+    const selected = props.getValue();
+
+
+    if (selected.length === 1) {
+      const label = (selected[0] as any).label; // você pode tipar melhor aqui se souber a estrutura
+      const truncated = label.length > 10 ? `${label.slice(0, 10)}...` : label;
+      return (
+        <components.ValueContainer {...props}>
+          {truncated}
+        </components.ValueContainer>
+      );
+    }
+
+    return <components.ValueContainer {...props} />;
+  };
 
   useEffect(() => {
     async function fetchRecipes() {
@@ -72,6 +99,68 @@ export default function Home() {
     fetchRecipes();
   }, []);
 
+  useEffect(() => {
+    async function fetchIngredients() {
+      try {
+        const response = await api.get("/ingredientes"); // Endpoint para buscar ingredientes
+        const formattedIngredients = response.data.map((ingredient: any) => ({
+          value: ingredient.nome,
+          label: ingredient.nome,
+        }));
+        setIngredients(formattedIngredients);
+      } catch (error) {
+        console.error("Erro ao buscar ingredientes:", error);
+      }
+    }
+
+    fetchIngredients();
+  }, []);
+
+  useEffect(() => {
+    async function fetchMostAccessedRecipes() {
+      try {
+        const response = await api.get('/receitas/mais-acessadas/');
+        const formattedRecipes = response.data.map((recipe: any) => ({
+          id: recipe.id,
+          title: recipe.titulo,
+          imageUrl: recipe?.imagem || altImage,
+          time: converterHoraParaMinutos(recipe.tempo_preparo),
+          viewCount: recipe.quantidade_visualizacao,
+          difficulty: recipe.dificuldade,
+        }));
+        setRecipes(formattedRecipes);
+      } catch (error) {
+        console.error('Erro ao buscar receitas mais acessadas:', error);
+      }
+    }
+
+    fetchMostAccessedRecipes();
+  }, []);
+
+  useEffect(() => {
+    async function fetchRandomRecipes() {
+      try {
+        const response_random = await api.get('/receitas/aleatorias/');
+        console.log('Resposta do endpoint aleatório:', response_random.data);
+        const shuffledRecipes_random = response_random.data.sort(() => 0.5 - Math.random()).slice(0, 10); // Seleciona 10 receitas aleatórias
+        const formattedRecipes_random = shuffledRecipes_random.map((recipe: any) => ({
+          id: recipe.id,
+          title: recipe.titulo,
+          imageUrl: recipe?.imagem || altImage,
+          time: converterHoraParaMinutos(recipe.tempo_preparo),
+          viewCount: recipe.quantidade_visualizacao,
+          difficulty: recipe.dificuldade,
+        }));
+        setRecipes_Random(formattedRecipes_random);
+        console.log('Receitas aleatórias:', recipes_random);
+      } catch (error) {
+        console.error('Erro ao buscar receitas aleatórias:', error);
+      }
+    }
+
+    fetchRandomRecipes();
+  }, []);
+
   async function handleSearch() {
     setLoading(true);
 
@@ -86,6 +175,13 @@ export default function Home() {
         params.append("dificuldade", selectedFilters.dificuldade);
       if (selectedFilters.tempo)
         params.append("tempo_preparo", selectedFilters.tempo);
+
+      // Adiciona os ingredientes selecionados ao payload
+      if (selectedIngredients.length > 0) {
+        selectedIngredients.forEach((item) => {
+          params.append("ingredientes", item.value);
+        });
+      }
 
       // Redireciona para a página de receitas com os parâmetros de busca
       navigate(`/receitas?${params.toString()}`);
@@ -107,6 +203,7 @@ export default function Home() {
       </Box>
     );
   }
+  
 
   return (
     <>
@@ -120,7 +217,7 @@ export default function Home() {
         <h3 className="text-1xl font-bold text-white text-shadow-lg">
           Busque por receitas do seu interesse
         </h3>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 w-full max-w-2xl">
           <input
             type="text"
             placeholder="Buscar..."
@@ -131,19 +228,73 @@ export default function Home() {
                 handleSearch(); // Chama a função de busca ao pressionar Enter
               }
             }}
-            className="bg-white rounded-sm px-2 py-1 w-100"
+            className="bg-white rounded-sm px-3 py-1.5 w-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <Select
+            isMulti
+            options={Array.from(new Map(ingredients.map(item => [item.label, item])).values()).sort((a, b) => a.label.localeCompare(b.label))} // Remove duplicados e ordena em ordem alfabética
+            placeholder={"Selecione os ingredientes..."}
+            onChange={(selected) => {
+              setSelectedIngredients(selected || []);
+            }}
+            className="w-full z-50" // Adiciona z-index para garantir que o MultiSelect fique acima de outros elementos
+            isSearchable={true} // Permite busca no MultiSelect
+            closeMenuOnSelect={false} // Mantém o menu aberto ao selecionar
+            hideSelectedOptions={false} // Mostra os itens selecionados na lista
+            components={{
+              Option: (props) => {
+                return (
+                  <div>
+                    <components.Option {...props}>
+                      <input
+                        type="checkbox"
+                        checked={props.isSelected}
+                        onChange={() => null} // O react-select já gerencia o estado
+                        style={{ marginRight: 10 }}
+                      />
+                      {props.label}
+                    </components.Option>
+                  </div>
+                );
+              }, // Usa o ValueContainer personalizado
+            }}
+            value={selectedIngredients}
+            styles={{
+              multiValue: (base) => ({
+                ...base,
+                backgroundColor: "#e0e0e0", // Cor de fundo para itens selecionados
+                borderRadius: "4px",
+                padding: "2px 6px",
+              }),
+              multiValueLabel: (base) => ({
+                ...base,
+                color: "#333", // Cor do texto dos itens selecionados
+              }),
+              multiValueRemove: (base) => ({
+                ...base,
+                color: "#666",
+                ':hover': {
+                  backgroundColor: "#ccc",
+                  color: "#000",
+                },
+              }),
+              menu: (base) => ({
+                ...base,
+                zIndex: 9999, // Garante que o menu do MultiSelect fique acima de outros elementos
+              }),
+            }}
           />
           <Button
             onClick={handleSearch}
             title="Buscar"
             type="button"
             sx={{
-              backgroundColor: query.trim() || Object.values(selectedFilters).some((value) => value) ? "#D9D9D9" : "#f0f0f0", // Cor diferente quando habilitado/desabilitado
-              "&:hover": query.trim() || Object.values(selectedFilters).some((value) => value) ? { backgroundColor: "#f0f0f0" } : undefined,
-              color: query.trim() || Object.values(selectedFilters).some((value) => value) ? "#000000" : "#a0a0a0", // Cor do texto desabilitada
+              backgroundColor: query.trim() || selectedIngredients.length > 0 || Object.values(selectedFilters).some((value) => value) ? "#D9D9D9" : "#f0f0f0", // Cor diferente quando habilitado/desabilitado
+              "&:hover": query.trim() || selectedIngredients.length > 0 || Object.values(selectedFilters).some((value) => value) ? { backgroundColor: "#f0f0f0" } : undefined,
+              color: query.trim() || selectedIngredients.length > 0 || Object.values(selectedFilters).some((value) => value) ? "#000000" : "#a0a0a0", // Cor do texto desabilitada
             }}
             variant="contained"
-            disabled={!query.trim() && !Object.values(selectedFilters).some((value) => value)} // Habilita o botão se houver texto ou filtros selecionados
+            disabled={!query.trim() && (selectedIngredients.length || Object.values(selectedFilters).some((value) => value)) === 0} // Habilita o botão se houver texto ou ingredientes selecionados
           >
             <Search className="size-5" />
           </Button>
@@ -177,12 +328,12 @@ export default function Home() {
       <RecipeCarousel
         title="Receitas Populares"
         subTitle="Explore as mais acessadas"
-        recipes={recipes.toSorted((a, b) => b.viewCount - a.viewCount)}
+        recipes={recipes.slice().sort((a: RecipeProps, b: RecipeProps) => b.viewCount - a.viewCount)}
       />
       <RecipeCarousel
         title="Sugestões de receitas"
         subTitle="Receitas para te inspirar"
-        recipes={recipes}
+        recipes={recipes_random.slice().sort((a: RecipeProps, b: RecipeProps) => b.viewCount - a.viewCount)}
       />
     </>
   );
@@ -275,9 +426,9 @@ function AdvancedSearch({
   selectedFilters={selectedFilters}
           />
           <FilterOption
-            label="Médio"
+            label="Média"
             name="dificuldade"
-            value="Médio"
+            value="Média"
               onChange={handleFilterChange}
   selectedFilters={selectedFilters}
           />
@@ -326,13 +477,13 @@ function AdvancedSearch({
               onChange={handleFilterChange}
   selectedFilters={selectedFilters}
           />
-          {/* <FilterOption
+          <FilterOption
             label="Mais de 1h"
             name="tempo"
-            value="61"
+            value="100"
               onChange={handleFilterChange}
   selectedFilters={selectedFilters}
-          /> */}
+          />
         </Filter>
       </div>
     </motion.div>
