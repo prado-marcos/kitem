@@ -75,6 +75,13 @@ function Profile() {
           ) : (
             <>
               <Link
+                to="/editar-cadastro"
+                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                onClick={() => setIsDropdownOpen(false)}
+              >
+                Editar Cadastro
+              </Link>
+              <Link
                 to="/gerenciamento-receitas"
                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 onClick={() => setIsDropdownOpen(false)}
@@ -82,11 +89,11 @@ function Profile() {
                 Gerenciamento de Receitas
               </Link>
               <Link
-                to="/editar-cadastro"
+                to="/cadastro-receita"
                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 onClick={() => setIsDropdownOpen(false)}
               >
-                Editar Cadastro
+                Adicionar Nova Receita
               </Link>
               {/* <Link
                 to="/lista-compras"

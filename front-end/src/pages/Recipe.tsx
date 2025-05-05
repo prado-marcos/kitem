@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { Heart, Share2 } from "lucide-react";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
-import { Box, CircularProgress, Typography } from "@mui/material";
+import { CircularProgress } from "@mui/material";
 
 interface IngredienteRecipeProps {
   quantity: number;

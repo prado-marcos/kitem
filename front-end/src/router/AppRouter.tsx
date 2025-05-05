@@ -9,6 +9,7 @@ import RecipeList from "../pages/RecipeList";
 import RecipeManagement from "../pages/RecipeManagement";
 import PrivateRoute from "./PrivateRoute";
 import UpdateRegister from "../pages/UpdateRegister";
+import CreateRecipe from "../pages/CreateRecipe";
 
 function AppRouter() {
   return (
@@ -33,6 +34,14 @@ function AppRouter() {
             element={
               <PrivateRoute>
                 <UpdateRegister />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/cadastro-receita"
+            element={
+              <PrivateRoute>
+                <CreateRecipe />
               </PrivateRoute>
             }
           />

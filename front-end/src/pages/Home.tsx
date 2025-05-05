@@ -10,7 +10,12 @@ import "swiper/css/navigation";
 import { Button, CircularProgress } from "@mui/material";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
-import Select, { MultiValue, components, ValueContainerProps, GroupBase } from "react-select";
+import Select, {
+  MultiValue,
+  components,
+  ValueContainerProps,
+  GroupBase,
+} from "react-select";
 
 const altImage = "https://freesvg.org/img/mealplate.png";
 
@@ -51,19 +56,19 @@ export default function Home() {
     tempo: "",
   });
 
-  const [ingredients, setIngredients] = useState<MultiValue<{ value: string; label: string }>>([]);
-  const [selectedIngredients, setSelectedIngredients] = useState<MultiValue<{ value: string; label: string }>>([]);
-  const CustomValueContainer = <
-    OptionType,
-    IsMulti extends boolean = true
-  >(
+  const [ingredients, setIngredients] = useState<
+    MultiValue<{ value: string; label: string }>
+  >([]);
+  const [selectedIngredients, setSelectedIngredients] = useState<
+    MultiValue<{ value: string; label: string }>
+  >([]);
+  const CustomValueContainer = <OptionType, IsMulti extends boolean = true>(
     props: ValueContainerProps<OptionType, IsMulti, GroupBase<OptionType>>
   ) => {
     const selected = props.getValue();
 
-
     if (selected.length === 1) {
-      const label = (selected[0] as any).label; // você pode tipar melhor aqui se souber a estrutura
+      const label = (selected[0] as any).label;
       const truncated = label.length > 10 ? `${label.slice(0, 10)}...` : label;
       return (
         <components.ValueContainer {...props}>
@@ -119,7 +124,7 @@ export default function Home() {
   useEffect(() => {
     async function fetchMostAccessedRecipes() {
       try {
-        const response = await api.get('/receitas/mais-acessadas/');
+        const response = await api.get("/receitas/mais-acessadas/");
         const formattedRecipes = response.data.map((recipe: any) => ({
           id: recipe.id,
           title: recipe.titulo,
@@ -130,7 +135,7 @@ export default function Home() {
         }));
         setRecipes(formattedRecipes);
       } catch (error) {
-        console.error('Erro ao buscar receitas mais acessadas:', error);
+        console.error("Erro ao buscar receitas mais acessadas:", error);
       }
     }
 
@@ -140,21 +145,25 @@ export default function Home() {
   useEffect(() => {
     async function fetchRandomRecipes() {
       try {
-        const response_random = await api.get('/receitas/aleatorias/');
-        console.log('Resposta do endpoint aleatório:', response_random.data);
-        const shuffledRecipes_random = response_random.data.sort(() => 0.5 - Math.random()).slice(0, 10); // Seleciona 10 receitas aleatórias
-        const formattedRecipes_random = shuffledRecipes_random.map((recipe: any) => ({
-          id: recipe.id,
-          title: recipe.titulo,
-          imageUrl: recipe?.imagem || altImage,
-          time: converterHoraParaMinutos(recipe.tempo_preparo),
-          viewCount: recipe.quantidade_visualizacao,
-          difficulty: recipe.dificuldade,
-        }));
+        const response_random = await api.get("/receitas/aleatorias/");
+        console.log("Resposta do endpoint aleatório:", response_random.data);
+        const shuffledRecipes_random = response_random.data
+          .sort(() => 0.5 - Math.random())
+          .slice(0, 10); // Seleciona 10 receitas aleatórias
+        const formattedRecipes_random = shuffledRecipes_random.map(
+          (recipe: any) => ({
+            id: recipe.id,
+            title: recipe.titulo,
+            imageUrl: recipe?.imagem || altImage,
+            time: converterHoraParaMinutos(recipe.tempo_preparo),
+            viewCount: recipe.quantidade_visualizacao,
+            difficulty: recipe.dificuldade,
+          })
+        );
         setRecipes_Random(formattedRecipes_random);
-        console.log('Receitas aleatórias:', recipes_random);
+        console.log("Receitas aleatórias:", recipes_random);
       } catch (error) {
-        console.error('Erro ao buscar receitas aleatórias:', error);
+        console.error("Erro ao buscar receitas aleatórias:", error);
       }
     }
 
@@ -210,7 +219,6 @@ export default function Home() {
       </div>
     );
   }
-  
 
   return (
     <>
@@ -239,7 +247,9 @@ export default function Home() {
           />
           <Select
             isMulti
-            options={Array.from(new Map(ingredients.map(item => [item.label, item])).values()).sort((a, b) => a.label.localeCompare(b.label))} // Remove duplicados e ordena em ordem alfabética
+            options={Array.from(
+              new Map(ingredients.map((item) => [item.label, item])).values()
+            ).sort((a, b) => a.label.localeCompare(b.label))} // Remove duplicados e ordena em ordem alfabética
             placeholder={"Selecione os ingredientes..."}
             onChange={(selected) => {
               setSelectedIngredients(selected || []);
@@ -280,7 +290,7 @@ export default function Home() {
               multiValueRemove: (base) => ({
                 ...base,
                 color: "#666",
-                ':hover': {
+                ":hover": {
                   backgroundColor: "#ccc",
                   color: "#000",
                 },
@@ -296,12 +306,31 @@ export default function Home() {
             title="Buscar"
             type="button"
             sx={{
-              backgroundColor: query.trim() || selectedIngredients.length > 0 || Object.values(selectedFilters).some((value) => value) ? "#D9D9D9" : "#f0f0f0", // Cor diferente quando habilitado/desabilitado
-              "&:hover": query.trim() || selectedIngredients.length > 0 || Object.values(selectedFilters).some((value) => value) ? { backgroundColor: "#f0f0f0" } : undefined,
-              color: query.trim() || selectedIngredients.length > 0 || Object.values(selectedFilters).some((value) => value) ? "#000000" : "#a0a0a0", // Cor do texto desabilitada
+              backgroundColor:
+                query.trim() ||
+                selectedIngredients.length > 0 ||
+                Object.values(selectedFilters).some((value) => value)
+                  ? "#D9D9D9"
+                  : "#f0f0f0", // Cor diferente quando habilitado/desabilitado
+              "&:hover":
+                query.trim() ||
+                selectedIngredients.length > 0 ||
+                Object.values(selectedFilters).some((value) => value)
+                  ? { backgroundColor: "#f0f0f0" }
+                  : undefined,
+              color:
+                query.trim() ||
+                selectedIngredients.length > 0 ||
+                Object.values(selectedFilters).some((value) => value)
+                  ? "#000000"
+                  : "#a0a0a0", // Cor do texto desabilitada
             }}
             variant="contained"
-            disabled={!query.trim() && (selectedIngredients.length || Object.values(selectedFilters).some((value) => value)) === 0} // Habilita o botão se houver texto ou ingredientes selecionados
+            disabled={
+              !query.trim() &&
+              (selectedIngredients.length ||
+                Object.values(selectedFilters).some((value) => value)) === 0
+            } // Habilita o botão se houver texto ou ingredientes selecionados
           >
             <Search className="size-5" />
           </Button>
@@ -335,12 +364,16 @@ export default function Home() {
       <RecipeCarousel
         title="Receitas Populares"
         subTitle="Explore as mais acessadas"
-        recipes={recipes.slice().sort((a: RecipeProps, b: RecipeProps) => b.viewCount - a.viewCount)}
+        recipes={recipes
+          .slice()
+          .sort((a: RecipeProps, b: RecipeProps) => b.viewCount - a.viewCount)}
       />
       <RecipeCarousel
         title="Sugestões de receitas"
         subTitle="Receitas para te inspirar"
-        recipes={recipes_random.slice().sort((a: RecipeProps, b: RecipeProps) => b.viewCount - a.viewCount)}
+        recipes={recipes_random
+          .slice()
+          .sort((a: RecipeProps, b: RecipeProps) => b.viewCount - a.viewCount)}
       />
     </>
   );
@@ -374,36 +407,36 @@ function AdvancedSearch({
             label="Vegano"
             name="restricao"
             value="vegano"
-              onChange={handleFilterChange}
-  selectedFilters={selectedFilters}
+            onChange={handleFilterChange}
+            selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Vegetariano"
             name="restricao"
             value="vegetariano"
-              onChange={handleFilterChange}
-  selectedFilters={selectedFilters}
+            onChange={handleFilterChange}
+            selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Sem Glúten"
             name="restricao"
             value="sem-gluten"
-              onChange={handleFilterChange}
-  selectedFilters={selectedFilters}
+            onChange={handleFilterChange}
+            selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Baixa Caloria"
             name="restricao"
             value="baixa-caloria"
-              onChange={handleFilterChange}
-  selectedFilters={selectedFilters}
+            onChange={handleFilterChange}
+            selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Sem Lactose"
             name="restricao"
             value="sem-lactose"
-              onChange={handleFilterChange}
-  selectedFilters={selectedFilters}
+            onChange={handleFilterChange}
+            selectedFilters={selectedFilters}
           />
         </Filter>
 
@@ -412,15 +445,15 @@ function AdvancedSearch({
             label="Doce"
             name="tipo"
             value="doce"
-              onChange={handleFilterChange}
-  selectedFilters={selectedFilters}
+            onChange={handleFilterChange}
+            selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Salgado"
             name="tipo"
             value="salgado"
-              onChange={handleFilterChange}
-  selectedFilters={selectedFilters}
+            onChange={handleFilterChange}
+            selectedFilters={selectedFilters}
           />
         </Filter>
 
@@ -429,29 +462,29 @@ function AdvancedSearch({
             label="Fácil"
             name="dificuldade"
             value="Fácil"
-              onChange={handleFilterChange}
-  selectedFilters={selectedFilters}
+            onChange={handleFilterChange}
+            selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Média"
             name="dificuldade"
             value="Média"
-              onChange={handleFilterChange}
-  selectedFilters={selectedFilters}
+            onChange={handleFilterChange}
+            selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Difícil"
             name="dificuldade"
             value="Difícil"
-              onChange={handleFilterChange}
-  selectedFilters={selectedFilters}
+            onChange={handleFilterChange}
+            selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Master Chef"
             name="dificuldade"
             value="Master Chef"
-              onChange={handleFilterChange}
-  selectedFilters={selectedFilters}
+            onChange={handleFilterChange}
+            selectedFilters={selectedFilters}
           />
         </Filter>
 
@@ -460,36 +493,36 @@ function AdvancedSearch({
             label="Menos de 20 min"
             name="tempo"
             value="20"
-              onChange={handleFilterChange}
-  selectedFilters={selectedFilters}
+            onChange={handleFilterChange}
+            selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Menos de 30 min"
             name="tempo"
             value="30"
-              onChange={handleFilterChange}
-  selectedFilters={selectedFilters}
+            onChange={handleFilterChange}
+            selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Menos de 40 min"
             name="tempo"
             value="40"
-              onChange={handleFilterChange}
-  selectedFilters={selectedFilters}
+            onChange={handleFilterChange}
+            selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Menos de 1h"
             name="tempo"
             value="60"
-              onChange={handleFilterChange}
-  selectedFilters={selectedFilters}
+            onChange={handleFilterChange}
+            selectedFilters={selectedFilters}
           />
           <FilterOption
             label="Mais de 1h"
             name="tempo"
             value="100"
-              onChange={handleFilterChange}
-  selectedFilters={selectedFilters}
+            onChange={handleFilterChange}
+            selectedFilters={selectedFilters}
           />
         </Filter>
       </div>

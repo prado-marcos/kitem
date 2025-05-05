@@ -1,48 +1,69 @@
-import { useState } from "react";
+// import { Search } from "lucide-react";
+// import { Button } from "@mui/material";
+import { useEffect, useState } from "react";
 import recipeManagement from "../assets/recipe-management.jpg";
-import { Search } from "lucide-react";
 import RecipeCarousel from "../components/RecipeCarousel";
-import { Button } from "@mui/material";
+import api from "../services/api";
+import { CircularProgress } from "@mui/material";
+const altImage = "https://freesvg.org/img/mealplate.png";
 
-const recipes: RecipeProps[] = [
-  {
-    id: 1,
-    title: "Pasta Carbonara",
-    imageUrl: "/assets/pasta.jpg",
-    time: "30 mins",
-    rating: 4.5,
-    difficulty: "Fácil",
-  },
-  {
-    id: 2,
-    title: "Salmão Grelhado",
-    imageUrl: "/assets/salmao.jpg",
-    time: "20 mins",
-    rating: 4.8,
-    difficulty: "Fácil",
-  },
-  {
-    id: 3,
-    title: "Torrada de abacate",
-    imageUrl: "/assets/torrada.jpg",
-    time: "10 mins",
-    rating: 4.7,
-    difficulty: "Fácil",
-  },
-  {
-    id: 4,
-    title: "Risoto de Cogumelos",
-    imageUrl: "/assets/risoto.jpg",
-    time: "40 mins",
-    rating: 4.6,
-    difficulty: "Fácil",
-  },
-];
+interface RecipeProps {
+  id: number;
+  title: string;
+  imageUrl: string;
+  time: string;
+  viewCount: number;
+  difficulty: string;
+  rating?: number;
+}
 
 export default function RecipeManagement() {
-  const [query, setQuery] = useState("");
-  function handleSearch() {
-    console.log(query);
+  // const [query, setQuery] = useState("");
+  const [myRecipes, setMyRecipes] = useState<RecipeProps[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // function handleSearch() {
+  //   console.log(query);
+  // }
+
+  useEffect(() => {
+    async function fetchRecipes() {
+      try {
+        const userId = localStorage.getItem("userId");
+        const response = await api.get(`/receitas/${userId}`);
+        const formattedRecipes = response.data.map((recipe: any) => ({
+          id: recipe.id,
+          title: recipe.titulo,
+          imageUrl: recipe?.imagem || altImage,
+          time: converterHoraParaMinutos(recipe.tempo_preparo),
+          viewCount: recipe.quantidade_visualizacao,
+          difficulty: recipe.dificuldade,
+        }));
+        setMyRecipes(formattedRecipes);
+      } catch (error) {
+        console.error("Erro ao buscar receitas:", error);
+        setMyRecipes([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchRecipes();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
+        <CircularProgress
+          style={{ color: "#9e000e" }} // Cor personalizada
+          size={64} // Tamanho do spinner
+          thickness={4} // Espessura do spinner
+        />
+        <p className="mt-4 text-lg font-semibold text-gray-600">
+          Carregando receitas, por favor aguarde...
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -57,7 +78,7 @@ export default function RecipeManagement() {
         <h3 className="text-1xl font-bold text-white text-shadow-lg">
           Adicione e gerencie suas receitas facilmente.
         </h3>
-        <div className="flex items-center gap-1">
+        {/* <div className="flex items-center gap-1">
           <input
             type="text"
             placeholder="Buscar..."
@@ -78,18 +99,28 @@ export default function RecipeManagement() {
           >
             <Search className="size-5" />
           </Button>
-        </div>
+        </div> */}
       </div>
-      <RecipeCarousel
-        title="Minhas Receitas"
-        subTitle=""
-        recipes={recipes}
-      />
-      <RecipeCarousel
+      {myRecipes.length && (
+        <RecipeCarousel
+          title="Minhas Receitas"
+          subTitle=""
+          recipes={myRecipes}
+        />
+      )}
+      {/* <RecipeCarousel
         title="Receitas Favoritas"
         subTitle=""
         recipes={recipes}
-      />
+      /> */}
     </>
   );
+}
+
+function converterHoraParaMinutos(hora: string): number {
+  const partes = hora.split(":");
+  const horas = parseInt(partes[0], 10);
+  const minutos = parseInt(partes[1], 10);
+  const segundos = partes[2] ? parseInt(partes[2], 10) : 0;
+  return horas * 60 + minutos + Math.round(segundos / 60);
 }
