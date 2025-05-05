@@ -1,13 +1,14 @@
 from django.urls import path
 from . import views_api  # Importa as views do arquivo views_api.py
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views_api import ReceitaMaisAcessadasAPIView, ReceitaAleatoriaAPIView
+from .views_api import CustomTokenObtainPairView, ReceitaMaisAcessadasAPIView, ReceitaAleatoriaAPIView
 
 urlpatterns = [
     # API Root (opcional, pode ser removido se não for necessário)
     path('', views_api.api_root, name='api-root'),
 
     # rota de auth
+    path('auth/login2/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 

@@ -1,6 +1,7 @@
 from rest_framework import generics
 from .models import Ingrediente, Receita, ReceitaIngrediente, Favorito, ListaCompras, ListaComprasIngrediente
 from .serializers import (
+    CustomTokenObtainPairSerializer,
     IngredienteSerializer,
     ReceitaSerializer,
     ReceitaIngredienteSerializer,
@@ -19,6 +20,10 @@ from rest_framework.exceptions import ValidationError
 from django.db.models import Q
 from datetime import timedelta
 from random import sample
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
 class UsuarioListCreateAPIView(generics.ListCreateAPIView):
     queryset = Usuario.objects.all()

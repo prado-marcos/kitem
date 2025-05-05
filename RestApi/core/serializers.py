@@ -6,6 +6,23 @@ from django.contrib.auth import get_user_model
 
 Usuario = get_user_model()
 
+# auth/serializers.py
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        # Adiciona informações extras ao token, se desejar
+        token['id'] = user.id
+        return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        # Adiciona o ID do usuário na resposta (fora do token também, se quiser)
+        data['user_id'] = self.user.id
+        return data
+
 # Serializer para o modelo Usuario (Django User)
 class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:
