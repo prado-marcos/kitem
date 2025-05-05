@@ -7,7 +7,7 @@ import RecipeCarousel from "../components/RecipeCarousel";
 import "swiper/css";
 // @ts-expect-error importe funciona normalmente
 import "swiper/css/navigation";
-import { Box, Button, CircularProgress } from "@mui/material";
+import { Button, CircularProgress } from "@mui/material";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 import Select, { MultiValue, components, ValueContainerProps, GroupBase } from "react-select";
