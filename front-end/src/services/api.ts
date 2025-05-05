@@ -48,6 +48,7 @@ api.interceptors.response.use(
       // Se chegou aqui, o refresh falhou ou não existe
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
+      localStorage.removeItem("userId");
       window.location.href = "/login";
     }
 

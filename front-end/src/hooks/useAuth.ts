@@ -30,12 +30,14 @@ export function useAuth() {
       // Limpa tokens antigos
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
+      localStorage.removeItem("userId");
 
-      const response = await api.post("/auth/login/", { username, password });
+      const response = await api.post("/auth/login2/", { username, password });
 
-      const { access, refresh } = response.data;
+      const { access, refresh, user_id } = response.data;
       localStorage.setItem("accessToken", access);
       localStorage.setItem("refreshToken", refresh);
+      localStorage.setItem("userId", user_id);
 
       setIsAuthenticated(true);
       navigate("/gerenciamento-receitas");
@@ -51,6 +53,7 @@ export function useAuth() {
   function logout() {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
+    localStorage.removeItem("userId");
     setIsAuthenticated(false);
     navigate("/login");
   }
