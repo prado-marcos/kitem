@@ -3,6 +3,7 @@ import { useState, ChangeEvent, FormEvent } from "react";
 import registerBanner from "../assets/register_banner.jpg";
 import { Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
+import api from "../services/api";
 
 interface RegisterProps {
   onSwitchToLogin: () => void;
@@ -78,43 +79,38 @@ export default function Register({ onSwitchToLogin }: RegisterProps) {
     return Object.keys(newErrors).length === 0;
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!validate()) return;
 
-    fetch("/api/usuarios", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    try {
+      await api.post('/usuarios/', {
         username: formData.userName,
         email: formData.email,
         first_name: formData.firstName,
         last_name: formData.lastName,
-      }),
-    })
-      .then((response) => {
-        if (!response.ok) throw new Error("Falha no cadastro");
-        return response.json();
-      })
-      .then(() => {
-        setSnackbarMessage("Cadastro realizado com sucesso!");
-        setSnackbarSeverity("success");
-        setSnackbarOpen(true);
-
-        setFormData({
-          firstName: "",
-          lastName: "",
-          email: "",
-          password: "",
-          userName: "",
-        });
-      })
-      .catch(() => {
-        setSnackbarMessage("Erro ao realizar cadastro");
-        setSnackbarSeverity("error");
-        setSnackbarOpen(true);
+        password: formData.password,
+      }, {
+        headers: { 'Content-Type': 'application/json' }
       });
+
+      setSnackbarMessage("Cadastro realizado com sucesso!");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+        userName: "",
+      });
+    } catch (error:any) {
+      setSnackbarMessage("Erro ao realizar cadastro: " + JSON.parse(error.request.response).username);
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
   }
 
   function handleCloseSnackbar() {
