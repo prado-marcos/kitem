@@ -46,10 +46,8 @@ export default function Login() {
 
     if (!formData.password) {
       newErrors.password = "Senha é obrigatória";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Senha deve ter pelo menos 6 caracteres";
     }
-
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -57,7 +55,7 @@ export default function Login() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!validate()) return;
-
+    
     setIsLoading(true);
 
     try {

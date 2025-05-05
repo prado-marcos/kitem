@@ -10,10 +10,13 @@ import {
   TableRow,
   Paper,
   Typography,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import api from "../services/api";
+import { useNavigate } from "react-router-dom";
 
 interface Ingredient {
   quantity: string;
@@ -67,6 +70,15 @@ export default function RecipeRegister({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Snackbar states
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">(
+    "success"
+  );
+
+  const navigate = useNavigate();
+
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
@@ -93,7 +105,10 @@ export default function RecipeRegister({
   function handleAddIngredient() {
     setFormData((prev) => ({
       ...prev,
-      ingredientes: [...prev.ingredientes, { quantity: "", unit: "", name: "" }],
+      ingredientes: [
+        ...prev.ingredientes,
+        { quantity: "", unit: "", name: "" },
+      ],
     }));
   }
 
@@ -198,11 +213,11 @@ export default function RecipeRegister({
         throw new Error("Usuário não autenticado");
       }
 
-      // 1. Criar a receita
+      // Criar a receita
       const recipeResponse = await api.post("/receitas/", {
         titulo: formData.titulo,
         descricao: formData.descricao,
-        tempo_preparo: parseTimeToSeconds(formData.tempo_preparo) || null,
+        tempo_preparo: formData.tempo_preparo || null,
         dificuldade: formData.dificuldade,
         tipo: formData.tipo,
         restricao_alimentar: formData.restricao_alimentar,
@@ -212,15 +227,13 @@ export default function RecipeRegister({
 
       const recipeId = recipeResponse.data.id;
 
-      // 2. Para cada ingrediente:
+      // Criar relação com ingredientes
       for (const ingredient of formData.ingredientes) {
-        // 2.1 Criar ou obter o ingrediente
         const ingredientResponse = await api.post("/ingredientes/", {
           nome: ingredient.name,
         });
         const ingredientId = ingredientResponse.data.id;
 
-        // 2.2 Criar a relação receita_ingrediente
         await api.post("/receita_ingredientes/", {
           quantidade: ingredient.quantity || null,
           unidade_medida: ingredient.unit || "",
@@ -233,13 +246,30 @@ export default function RecipeRegister({
         onSubmit(formData);
       }
 
-      alert("Receita criada com sucesso!");
+      // Sucesso: abre Snackbar
+      setSnackbarMessage("Receita criada com sucesso!");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+
+      // Redireciona após 2 segundos
+      setTimeout(() => {
+        navigate("/gerenciamento-receitas");
+      }, 2000);
     } catch (error) {
       console.error("Erro ao criar receita:", error);
-      alert("Ocorreu um erro ao criar a receita. Por favor, tente novamente.");
+
+      setSnackbarMessage(
+        "Ocorreu um erro ao criar a receita. Por favor, tente novamente."
+      );
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  function handleCloseSnackbar() {
+    setSnackbarOpen(false);
   }
 
   return (
@@ -247,6 +277,22 @@ export default function RecipeRegister({
       <Typography variant="h4" sx={{ mb: 2 }}>
         {titlePage}
       </Typography>
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbarSeverity}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
+
       <form
         onSubmit={handleSubmit}
         className="w-full flex flex-col items-center gap-5"
@@ -265,17 +311,17 @@ export default function RecipeRegister({
             error={!!errors.titulo}
           />
           <TextField
+            type="time"
             label="Tempo de Preparo"
             name="tempo_preparo"
             value={formData.tempo_preparo}
             onChange={handleChange}
-            placeholder="Insira o tempo estimado"
+            placeholder=""
             variant="outlined"
             sx={{ mb: 2 }}
             helperText={errors.tempo_preparo}
             error={!!errors.tempo_preparo}
           />
-
           <TextField
             label="URL da foto"
             name="imagem"
@@ -315,9 +361,7 @@ export default function RecipeRegister({
                     style={{ display: "none" }}
                   />
                   <Button
-                    variant={
-                      formData.tipo === level ? "contained" : "outlined"
-                    }
+                    variant={formData.tipo === level ? "contained" : "outlined"}
                     component="span"
                     sx={{
                       textTransform: "none",
@@ -355,7 +399,9 @@ export default function RecipeRegister({
                   />
                   <Button
                     variant={
-                      formData.restricao_alimentar === level ? "contained" : "outlined"
+                      formData.restricao_alimentar === level
+                        ? "contained"
+                        : "outlined"
                     }
                     component="span"
                     sx={{
@@ -369,7 +415,9 @@ export default function RecipeRegister({
               ))}
             </Box>
             {errors.restricao_alimentar && (
-              <p className="text-red-500 text-sm mb-4">{errors.restricao_alimentar}</p>
+              <p className="text-red-500 text-sm mb-4">
+                {errors.restricao_alimentar}
+              </p>
             )}
           </Box>
 
@@ -441,11 +489,7 @@ export default function RecipeRegister({
                       <TextField
                         value={ing.unit}
                         onChange={(e) =>
-                          handleIngredientChange(
-                            index,
-                            "unit",
-                            e.target.value
-                          )
+                          handleIngredientChange(index, "unit", e.target.value)
                         }
                         placeholder="Ex: xícaras"
                         variant="outlined"
@@ -506,27 +550,4 @@ export default function RecipeRegister({
       </form>
     </Box>
   );
-}
-
-function parseTimeToSeconds(timeStr: string): number | null {
-  if (!timeStr) return null;
-  
-  const parts = timeStr.split(':');
-  let seconds = 0;
-  
-  if (parts.length === 3) {
-    // Formato hh:mm:ss
-    seconds += parseInt(parts[0]) * 3600; // horas
-    seconds += parseInt(parts[1]) * 60;   // minutos
-    seconds += parseInt(parts[2]);        // segundos
-  } else if (parts.length === 2) {
-    // Formato mm:ss
-    seconds += parseInt(parts[0]) * 60;   // minutos
-    seconds += parseInt(parts[1]);        // segundos
-  } else if (parts.length === 1) {
-    // Apenas segundos
-    seconds += parseInt(parts[0]);
-  }
-  
-  return isNaN(seconds) ? null : seconds;
 }

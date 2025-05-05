@@ -30,7 +30,7 @@ export default function RecipeManagement() {
     async function fetchRecipes() {
       try {
         const userId = localStorage.getItem("userId");
-        const response = await api.get(`/receitas/${userId}`);
+        const response = await api.get(`/receitas/usuario/${userId}/`);
         const formattedRecipes = response.data.map((recipe: any) => ({
           id: recipe.id,
           title: recipe.titulo,
@@ -101,12 +101,14 @@ export default function RecipeManagement() {
           </Button>
         </div> */}
       </div>
-      {myRecipes.length && (
+      {myRecipes.length ? (
         <RecipeCarousel
           title="Minhas Receitas"
           subTitle=""
           recipes={myRecipes}
         />
+      ) : (
+        ""
       )}
       {/* <RecipeCarousel
         title="Receitas Favoritas"
