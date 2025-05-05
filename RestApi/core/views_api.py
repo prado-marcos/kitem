@@ -76,6 +76,13 @@ class ReceitaRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
         except Exception as e:
             raise NotFound(detail=f"Erro inesperado: {str(e)}")
 
+class GetReceitaUsuario(generics.ListAPIView):
+    serializer_class = ReceitaSerializer
+
+    def get_queryset(self):
+        user_id = self.kwargs['user_id']  # Pega o valor <user_id> da URL
+        return Receita.objects.filter(id_usuario=user_id)
+
 class ReceitaDetalhadaAPIView(APIView):
     def get(self, request, pk):
         try:
