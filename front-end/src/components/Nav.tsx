@@ -95,13 +95,13 @@ function Profile() {
               >
                 Adicionar Nova Receita
               </Link>
-              {/* <Link
-                to="/lista-compras"
+              <Link
+                to="/lista-itens"
                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 onClick={() => setIsDropdownOpen(false)}
               >
-                Lista de Compras
-              </Link> */}
+                Lista de Itens
+              </Link>
               <button
                 onClick={handleLogout}
                 className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

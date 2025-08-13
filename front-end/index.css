@@ -3,3 +3,52 @@
 .pointer-button {
     cursor: pointer
 }
+
+/* Estilos para resolver problemas de z-index dos multiselects */
+.react-select__menu {
+    z-index: 9999 !important;
+}
+
+.react-select__menu-portal {
+    z-index: 9999 !important;
+}
+
+/* Garantir que o menu do select apareça acima de outros elementos */
+.react-select__menu--is-open {
+    z-index: 9999 !important;
+}
+
+/* Estilos específicos para quando usado dentro de modais */
+.MuiDialog-root .react-select__menu,
+.MuiDialog-root .react-select__menu-portal {
+    z-index: 9999 !important;
+}
+
+/* Garantir que o dropdown apareça acima do modal */
+.MuiDialog-root .react-select__menu--is-open {
+    z-index: 9999 !important;
+}
+
+/* Estilos adicionais para garantir que o react-select funcione corretamente */
+.react-select__control {
+    z-index: 1;
+}
+
+.react-select__menu-container {
+    z-index: 9999 !important;
+}
+
+/* Garantir que o portal do menu tenha z-index alto */
+body > .react-select__menu-portal {
+    z-index: 9999 !important;
+}
+
+/* Estilos específicos para o Material-UI Dialog */
+.MuiDialog-root {
+    z-index: 1300;
+}
+
+.MuiDialog-root .react-select__menu,
+.MuiDialog-root .react-select__menu-portal {
+    z-index: 9999 !important;
+}

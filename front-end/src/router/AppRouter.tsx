@@ -10,6 +10,7 @@ import RecipeManagement from "../pages/RecipeManagement";
 import PrivateRoute from "./PrivateRoute";
 import UpdateRegister from "../pages/UpdateRegister";
 import CreateRecipe from "../pages/CreateRecipe";
+import ListaItens from "../pages/ListaItens";
 
 function AppRouter() {
   return (
@@ -42,6 +43,14 @@ function AppRouter() {
             element={
               <PrivateRoute>
                 <CreateRecipe />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/lista-itens"
+            element={
+              <PrivateRoute>
+                <ListaItens />
               </PrivateRoute>
             }
           />

@@ -1,12 +1,12 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:8000/api",
+  baseURL: "/api",
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
   },
-  withCredentials: true,
+  timeout: 60000,
 });
 
 // Interceptor de requisição
@@ -30,10 +30,10 @@ api.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem("refreshToken");
         if (refreshToken) {
-          const response = await axios.post(
-            "http://localhost:8000/api/auth/refresh/",
-            { refresh: refreshToken }
-          );
+                  const response = await axios.post(
+          "/api/auth/refresh/",
+          { refresh: refreshToken }
+        );
 
           const newAccessToken = response.data.access;
           localStorage.setItem("accessToken", newAccessToken);
@@ -50,6 +50,17 @@ api.interceptors.response.use(
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("userId");
       window.location.href = "/login";
+    }
+
+    // Tratamento para outros tipos de erro
+    if (error.response?.status === 500) {
+      console.error("Erro interno do servidor");
+    } else if (error.response?.status === 404) {
+      console.error("Endpoint não encontrado");
+    } else if (error.response?.status === 403) {
+      console.error("Acesso negado");
+    } else if (!error.response) {
+      console.error("Erro de rede - verifique sua conexão");
     }
 
     return Promise.reject(error);

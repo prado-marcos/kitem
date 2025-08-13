@@ -17,6 +17,9 @@ import { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
+import Select from "react-select";
+import { selectStyles } from "../components/SelectStyles";
+import { UNIDADES_MEDIDA_OPTIONS } from "../constants/units";
 
 interface Ingredient {
   quantity: string;
@@ -36,7 +39,7 @@ interface RecipeData {
 }
 
 interface RecipeRegisterProps {
-  titlePage: string;
+  titlePage?: string;
   initialData?: RecipeData;
   onSubmit?: (data: RecipeData) => void;
 }
@@ -294,260 +297,478 @@ export default function RecipeRegister({
         </Alert>
       </Snackbar>
 
-      <form
-        onSubmit={handleSubmit}
-        className="w-full flex flex-col items-center gap-5"
-      >
-        <Box className="flex flex-col w-full md:w-[45%]">
-          <TextField
-            label="Título"
-            name="titulo"
-            value={formData.titulo}
-            onChange={handleChange}
-            placeholder="Insira o título da receita"
-            variant="outlined"
-            sx={{ mb: 2 }}
-            inputProps={{ maxLength: 50 }}
-            helperText={errors.titulo || "Máximo de 50 caracteres"}
-            error={!!errors.titulo}
-          />
-          <TextField
-            type="time"
-            label="Tempo de Preparo"
-            name="tempo_preparo"
-            value={formData.tempo_preparo}
-            onChange={handleChange}
-            placeholder=""
-            variant="outlined"
-            sx={{ mb: 2 }}
-            helperText={errors.tempo_preparo}
-            error={!!errors.tempo_preparo}
-          />
-          <TextField
-            label="URL da foto"
-            name="imagem"
-            value={formData.imagem}
-            onChange={handleChange}
-            placeholder="https://exemplo.com/foto.jpg"
-            variant="outlined"
-            sx={{ mb: 2 }}
-            helperText={errors.imagem}
-            error={!!errors.imagem}
-          />
+             <form
+         onSubmit={handleSubmit}
+         className="w-full flex flex-col items-center gap-8"
+       >
+         <Box className="flex flex-col md:flex-row w-full gap-8 justify-center">
+           {/* Bloco Esquerdo - Dados da Receita */}
+           <Box className="flex flex-col w-full md:w-[45%] bg-white rounded-lg shadow-md p-6">
+                           <Typography variant="h6" sx={{ mb: 3, color: "#9e000e", fontWeight: "bold" }}>
+                Dados da Receita
+              </Typography>
+                     <TextField
+             label="Título"
+             name="titulo"
+             value={formData.titulo}
+             onChange={handleChange}
+             placeholder="Insira o título da receita"
+             variant="outlined"
+             sx={{ 
+               mb: 3,
+               "& .MuiOutlinedInput-root": {
+                 "& fieldset": {
+                   borderColor: "#d1d5db"
+                 },
+                 "&:hover fieldset": {
+                   borderColor: "#9e000e"
+                 },
+                 "&.Mui-focused fieldset": {
+                   borderColor: "#9e000e"
+                 }
+               },
+               "& .MuiInputLabel-root": {
+                 "&.Mui-focused": {
+                   color: "#9e000e"
+                 }
+               },
+               "& .MuiOutlinedInput-input": {
+                 "&:hover": {
+                   color: "#374151"
+                 }
+               }
+             }}
+             inputProps={{ maxLength: 50 }}
+             helperText={errors.titulo || "Máximo de 50 caracteres"}
+             error={!!errors.titulo}
+             fullWidth
+           />
+                     <TextField
+             type="number"
+             label="Tempo de Preparo (minutos)"
+             name="tempo_preparo"
+             value={formData.tempo_preparo}
+             onChange={handleChange}
+             placeholder="Ex: 30"
+             variant="outlined"
+             sx={{ 
+               mb: 3,
+               "& .MuiOutlinedInput-root": {
+                 "& fieldset": {
+                   borderColor: "#d1d5db"
+                 },
+                 "&:hover fieldset": {
+                   borderColor: "#9e000e"
+                 },
+                 "&.Mui-focused fieldset": {
+                   borderColor: "#9e000e"
+                 }
+               },
+               "& .MuiInputLabel-root": {
+                 "&.Mui-focused": {
+                   color: "#9e000e"
+                 }
+               },
+               "& .MuiOutlinedInput-input": {
+                 "&:hover": {
+                   color: "#374151"
+                 }
+               }
+             }}
+             helperText={errors.tempo_preparo}
+             error={!!errors.tempo_preparo}
+             fullWidth
+             inputProps={{ min: 1, max: 999 }}
+           />
+                     <TextField
+             label="URL da foto"
+             name="imagem"
+             value={formData.imagem}
+             onChange={handleChange}
+             placeholder="https://exemplo.com/foto.jpg"
+             variant="outlined"
+             sx={{ 
+               mb: 3,
+               "& .MuiOutlinedInput-root": {
+                 "& fieldset": {
+                   borderColor: "#d1d5db"
+                 },
+                 "&:hover fieldset": {
+                   borderColor: "#9e000e"
+                 },
+                 "&.Mui-focused fieldset": {
+                   borderColor: "#9e000e"
+                 }
+               },
+               "& .MuiInputLabel-root": {
+                 "&.Mui-focused": {
+                   color: "#9e000e"
+                 }
+               },
+               "& .MuiOutlinedInput-input": {
+                 "&:hover": {
+                   color: "#374151"
+                 }
+               }
+             }}
+             helperText={errors.imagem}
+             error={!!errors.imagem}
+             fullWidth
+           />
 
-          <TextField
-            label="Descrição"
-            name="descricao"
-            value={formData.descricao}
-            onChange={handleChange}
-            placeholder="Descreva a receita"
-            variant="outlined"
-            multiline
-            rows={5}
-            sx={{ mb: 2 }}
-            helperText={errors.descricao}
-            error={!!errors.descricao}
-          />
-          <Box id="div-type">
-            <p className="mb-2 font-medium">Tipo</p>
-            <Box className="flex gap-2 mb-2 flex-wrap">
-              {["Doce", "Salgado"].map((level) => (
-                <label key={level}>
-                  <input
-                    type="radio"
-                    name="tipo"
-                    value={level}
-                    checked={formData.tipo === level}
-                    onChange={() => handleTypeSelect(level)}
-                    style={{ display: "none" }}
-                  />
-                  <Button
-                    variant={formData.tipo === level ? "contained" : "outlined"}
-                    component="span"
-                    sx={{
-                      textTransform: "none",
-                      borderRadius: "12px",
-                    }}
-                  >
-                    {level}
-                  </Button>
-                </label>
-              ))}
-            </Box>
-            {errors.tipo && (
-              <p className="text-red-500 text-sm mb-4">{errors.tipo}</p>
-            )}
-          </Box>
+                     <TextField
+             label="Descrição"
+             name="descricao"
+             value={formData.descricao}
+             onChange={handleChange}
+             placeholder="Descreva a receita"
+             variant="outlined"
+             multiline
+             rows={4}
+             sx={{ 
+               mb: 4,
+               "& .MuiOutlinedInput-root": {
+                 "& fieldset": {
+                   borderColor: "#d1d5db"
+                 },
+                 "&:hover fieldset": {
+                   borderColor: "#9e000e"
+                 },
+                 "&.Mui-focused fieldset": {
+                   borderColor: "#9e000e"
+                 }
+               },
+               "& .MuiInputLabel-root": {
+                 "&.Mui-focused": {
+                   color: "#9e000e"
+                 }
+               },
+               "& .MuiOutlinedInput-input": {
+                 "&:hover": {
+                   color: "#374151"
+                 }
+               }
+             }}
+             helperText={errors.descricao}
+             error={!!errors.descricao}
+             fullWidth
+           />
+                     <Box id="div-type" sx={{ mb: 4 }}>
+             <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: "600", color: "#374151" }}>
+               Tipo de Receita
+             </Typography>
+             <Box className="flex gap-3 mb-2 flex-wrap">
+               {["Doce", "Salgado"].map((level) => (
+                 <label key={level}>
+                   <input
+                     type="radio"
+                     name="tipo"
+                     value={level}
+                     checked={formData.tipo === level}
+                     onChange={() => handleTypeSelect(level)}
+                     style={{ display: "none" }}
+                   />
+                   <Button
+                     variant={formData.tipo === level ? "contained" : "outlined"}
+                     component="span"
+                     sx={{
+                       textTransform: "none",
+                       borderRadius: "12px",
+                       px: 3,
+                       py: 1,
+                       backgroundColor: formData.tipo === level ? "#9e000e" : "transparent",
+                       borderColor: formData.tipo === level ? "#9e000e" : "#d1d5db",
+                       color: formData.tipo === level ? "white" : "#374151",
+                       "&:hover": {
+                         backgroundColor: formData.tipo === level ? "#7c000b" : "#f3f4f6",
+                         borderColor: "#9e000e"
+                       }
+                     }}
+                   >
+                     {level}
+                   </Button>
+                 </label>
+               ))}
+             </Box>
+             {errors.tipo && (
+               <Typography variant="caption" sx={{ color: "#dc2626", display: "block", mt: 1 }}>
+                 {errors.tipo}
+               </Typography>
+             )}
+           </Box>
 
-          <Box id="div-restriction">
-            <p className="mb-2 font-medium">Restrição Alimentar</p>
-            <Box className="flex gap-2 mb-2 flex-wrap">
-              {[
-                "Vegano",
-                "Vegetariano",
-                "Sem Glúten",
-                "Baixa Caloria",
-                "Sem Lactose",
-              ].map((level) => (
-                <label key={level}>
-                  <input
-                    type="radio"
-                    name="restricao_alimentar"
-                    value={level}
-                    checked={formData.restricao_alimentar === level}
-                    onChange={() => handleRestrictionSelect(level)}
-                    style={{ display: "none" }}
-                  />
-                  <Button
-                    variant={
-                      formData.restricao_alimentar === level
-                        ? "contained"
-                        : "outlined"
-                    }
-                    component="span"
-                    sx={{
-                      textTransform: "none",
-                      borderRadius: "12px",
-                    }}
-                  >
-                    {level}
-                  </Button>
-                </label>
-              ))}
-            </Box>
-            {errors.restricao_alimentar && (
-              <p className="text-red-500 text-sm mb-4">
-                {errors.restricao_alimentar}
-              </p>
-            )}
-          </Box>
+                     <Box id="div-restriction" sx={{ mb: 4 }}>
+             <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: "600", color: "#374151" }}>
+               Restrição Alimentar
+             </Typography>
+             <Box className="flex gap-2 mb-2 flex-wrap">
+               {[
+                 "Vegano",
+                 "Vegetariano",
+                 "Sem Glúten",
+                 "Baixa Caloria",
+                 "Sem Lactose",
+               ].map((level) => (
+                 <label key={level}>
+                   <input
+                     type="radio"
+                     name="restricao_alimentar"
+                     value={level}
+                     checked={formData.restricao_alimentar === level}
+                     onChange={() => handleRestrictionSelect(level)}
+                     style={{ display: "none" }}
+                   />
+                   <Button
+                     variant={
+                       formData.restricao_alimentar === level
+                         ? "contained"
+                         : "outlined"
+                     }
+                     component="span"
+                     sx={{
+                       textTransform: "none",
+                       borderRadius: "12px",
+                       px: 2,
+                       py: 0.5,
+                       fontSize: "0.875rem",
+                       backgroundColor: formData.restricao_alimentar === level ? "#9e000e" : "transparent",
+                       borderColor: formData.restricao_alimentar === level ? "#9e000e" : "#d1d5db",
+                       color: formData.restricao_alimentar === level ? "white" : "#374151",
+                       "&:hover": {
+                         backgroundColor: formData.restricao_alimentar === level ? "#7c000b" : "#f3f4f6",
+                         borderColor: "#9e000e"
+                       }
+                     }}
+                   >
+                     {level}
+                   </Button>
+                 </label>
+               ))}
+             </Box>
+             {errors.restricao_alimentar && (
+               <Typography variant="caption" sx={{ color: "#dc2626", display: "block", mt: 1 }}>
+                 {errors.restricao_alimentar}
+               </Typography>
+             )}
+           </Box>
 
-          <Box id="div-difficulty">
-            <p className="mb-2 font-medium">Dificuldade</p>
-            <Box className="flex gap-2 mb-2 flex-wrap">
-              {["Fácil", "Médio", "Difícil", "Master Chef"].map((level) => (
-                <label key={level}>
-                  <input
-                    type="radio"
-                    name="dificuldade"
-                    value={level}
-                    checked={formData.dificuldade === level}
-                    onChange={() => handleDifficultySelect(level)}
-                    style={{ display: "none" }}
-                  />
-                  <Button
-                    variant={
-                      formData.dificuldade === level ? "contained" : "outlined"
-                    }
-                    component="span"
-                    sx={{
-                      textTransform: "none",
-                      borderRadius: "12px",
-                    }}
-                  >
-                    {level}
-                  </Button>
-                </label>
-              ))}
-            </Box>
-            {errors.dificuldade && (
-              <p className="text-red-500 text-sm mb-4">{errors.dificuldade}</p>
-            )}
-          </Box>
-        </Box>
+                     <Box id="div-difficulty" sx={{ mb: 2 }}>
+             <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: "600", color: "#374151" }}>
+               Nível de Dificuldade
+             </Typography>
+             <Box className="flex gap-2 mb-2 flex-wrap">
+               {["Fácil", "Médio", "Difícil", "Master Chef"].map((level) => (
+                 <label key={level}>
+                   <input
+                     type="radio"
+                     name="dificuldade"
+                     value={level}
+                     checked={formData.dificuldade === level}
+                     onChange={() => handleDifficultySelect(level)}
+                     style={{ display: "none" }}
+                   />
+                   <Button
+                     variant={
+                       formData.dificuldade === level ? "contained" : "outlined"
+                     }
+                     component="span"
+                     sx={{
+                       textTransform: "none",
+                       borderRadius: "12px",
+                       px: 3,
+                       py: 1,
+                       backgroundColor: formData.dificuldade === level ? "#9e000e" : "transparent",
+                       borderColor: formData.dificuldade === level ? "#9e000e" : "#d1d5db",
+                       color: formData.dificuldade === level ? "white" : "#374151",
+                       "&:hover": {
+                         backgroundColor: formData.dificuldade === level ? "#7c000b" : "#f3f4f6",
+                         borderColor: "#9e000e"
+                       }
+                     }}
+                   >
+                     {level}
+                   </Button>
+                 </label>
+               ))}
+             </Box>
+             {errors.dificuldade && (
+               <Typography variant="caption" sx={{ color: "#dc2626", display: "block", mt: 1 }}>
+                 {errors.dificuldade}
+               </Typography>
+             )}
+           </Box>
+                   </Box>
 
-        <Box className="flex flex-col w-full md:w-[45%]">
-          <p className="mb-2 font-medium">Ingredientes</p>
-          <Paper variant="outlined" sx={{ mb: 2 }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Quantidade</TableCell>
-                  <TableCell>Unidade de Medida</TableCell>
-                  <TableCell>Ingrediente</TableCell>
-                  <TableCell></TableCell>
-                </TableRow>
-              </TableHead>
+           {/* Bloco Direito - Ingredientes */}
+           <Box className="flex flex-col w-full md:w-[50%] bg-white rounded-lg shadow-md p-6">
+                           <Typography variant="h6" sx={{ mb: 3, color: "#9e000e", fontWeight: "bold" }}>
+                Ingredientes
+              </Typography>
+          
+                     <Paper variant="outlined" sx={{ mb: 3, borderRadius: 2 }}>
+             <Table size="small">
+               <TableHead>
+                 <TableRow sx={{ backgroundColor: "#f9fafb" }}>
+                   <TableCell sx={{ fontWeight: "600", color: "#374151", width: "20%" }}>Quantidade</TableCell>
+                   <TableCell sx={{ fontWeight: "600", color: "#374151", width: "35%" }}>Unidade de Medida</TableCell>
+                   <TableCell sx={{ fontWeight: "600", color: "#374151", width: "35%" }}>Ingrediente</TableCell>
+                   <TableCell sx={{ width: "10%" }}></TableCell>
+                 </TableRow>
+               </TableHead>
               <TableBody>
                 {formData.ingredientes.map((ing, index) => (
                   <TableRow key={index}>
-                    <TableCell>
-                      <TextField
-                        value={ing.quantity}
-                        onChange={(e) =>
-                          handleIngredientChange(
-                            index,
-                            "quantity",
-                            e.target.value
-                          )
-                        }
-                        placeholder="Ex: 2"
-                        variant="outlined"
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <TextField
-                        value={ing.unit}
-                        onChange={(e) =>
-                          handleIngredientChange(index, "unit", e.target.value)
-                        }
-                        placeholder="Ex: xícaras"
-                        variant="outlined"
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <TextField
-                        value={ing.name}
-                        onChange={(e) =>
-                          handleIngredientChange(index, "name", e.target.value)
-                        }
-                        placeholder="Ex: Farinha"
-                        variant="outlined"
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => handleRemoveIngredient(index)}>
-                        <Trash2 size={16} />
-                      </IconButton>
-                    </TableCell>
+                                         <TableCell sx={{ py: 1 }}>
+                       <TextField
+                         value={ing.quantity}
+                         onChange={(e) =>
+                           handleIngredientChange(
+                             index,
+                             "quantity",
+                             e.target.value
+                           )
+                         }
+                         placeholder="Ex: 2"
+                         variant="outlined"
+                         size="small"
+                         fullWidth
+                         sx={{ 
+                           "& .MuiOutlinedInput-root": {
+                             borderRadius: "8px",
+                             fontSize: "0.875rem",
+                             "& fieldset": {
+                               borderColor: "#d1d5db"
+                             },
+                             "&:hover fieldset": {
+                               borderColor: "#9e000e"
+                             },
+                             "&.Mui-focused fieldset": {
+                               borderColor: "#9e000e"
+                             }
+                           },
+                           "& .MuiOutlinedInput-input": {
+                             "&:hover": {
+                               color: "#374151"
+                             }
+                           }
+                         }}
+                       />
+                     </TableCell>
+                                         <TableCell sx={{ py: 1 }}>
+                       <Select
+                         value={{ value: ing.unit, label: ing.unit }}
+                         onChange={(option) =>
+                           handleIngredientChange(index, "unit", option?.value || "")
+                         }
+                         options={UNIDADES_MEDIDA_OPTIONS}
+                         placeholder="Selecione..."
+                         isSearchable
+                         menuPortalTarget={document.body}
+                         styles={selectStyles}
+                         isClearable
+                       />
+                     </TableCell>
+                                         <TableCell sx={{ py: 1 }}>
+                       <TextField
+                         value={ing.name}
+                         onChange={(e) =>
+                           handleIngredientChange(index, "name", e.target.value)
+                         }
+                         placeholder="Ex: Farinha"
+                         variant="outlined"
+                         size="small"
+                         fullWidth
+                         sx={{ 
+                           "& .MuiOutlinedInput-root": {
+                             borderRadius: "8px",
+                             fontSize: "0.875rem",
+                             "& fieldset": {
+                               borderColor: "#d1d5db"
+                             },
+                             "&:hover fieldset": {
+                               borderColor: "#9e000e"
+                             },
+                             "&.Mui-focused fieldset": {
+                               borderColor: "#9e000e"
+                             }
+                           },
+                           "& .MuiOutlinedInput-input": {
+                             "&:hover": {
+                               color: "#374151"
+                             }
+                           }
+                         }}
+                       />
+                     </TableCell>
+                                         <TableCell sx={{ py: 1, textAlign: "center" }}>
+                       <IconButton 
+                         onClick={() => handleRemoveIngredient(index)}
+                         sx={{ 
+                           color: "#dc2626",
+                           "&:hover": { 
+                             backgroundColor: "#fef2f2",
+                             color: "#b91c1c"
+                           }
+                         }}
+                       >
+                         <Trash2 size={16} />
+                       </IconButton>
+                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </Paper>
-          {errors.ingredientes && (
-            <p className="text-red-500 text-sm mb-2">{errors.ingredientes}</p>
-          )}
-          <Button
-            variant="outlined"
-            startIcon={<Plus />}
-            onClick={handleAddIngredient}
-            sx={{ mb: 2 }}
-          >
-            Adicionar ingrediente
-          </Button>
-        </Box>
+                     {errors.ingredientes && (
+             <Typography variant="caption" sx={{ color: "#dc2626", display: "block", mb: 2 }}>
+               {errors.ingredientes}
+             </Typography>
+           )}
+                     <Button
+             variant="outlined"
+             startIcon={<Plus />}
+             onClick={handleAddIngredient}
+             sx={{ 
+               mb: 2,
+               borderColor: "#9e000e",
+               color: "#9e000e",
+               "&:hover": {
+                 borderColor: "#7c000b",
+                 backgroundColor: "#fef2f2"
+               },
+               borderRadius: "8px",
+               px: 3,
+               py: 1.5
+             }}
+           >
+             Adicionar ingrediente
+           </Button>
+                   </Box>
+         </Box>
 
-        <Box className="w-full flex justify-center">
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={isSubmitting}
-            sx={{
-              backgroundColor: "#000000",
-              "&:hover": { backgroundColor: "#5C5C5C" },
-              color: "#ffffff",
-              borderRadius: "12px",
-              px: 4,
-              py: 1.5,
-            }}
-          >
-            {isSubmitting ? "Salvando..." : "Salvar receita"}
-          </Button>
-        </Box>
+                  <Box className="w-full flex justify-center">
+           <Button
+             type="submit"
+             variant="contained"
+             disabled={isSubmitting}
+             sx={{
+               backgroundColor: "#9e000e",
+               "&:hover": { backgroundColor: "#7c000b" },
+               color: "#ffffff",
+               borderRadius: "12px",
+               px: 6,
+               py: 2,
+               fontSize: "1.1rem",
+               fontWeight: "600",
+               boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+               "&:disabled": {
+                 backgroundColor: "#9ca3af"
+               }
+             }}
+           >
+             {isSubmitting ? "Salvando..." : "Salvar receita"}
+           </Button>
+         </Box>
       </form>
     </Box>
   );
