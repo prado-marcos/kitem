@@ -128,6 +128,10 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
-.pyc
+.pyc*
+.pyc.*
+pycache/
+pyc
+pyc.*
 __pycache__
 *.pyo
