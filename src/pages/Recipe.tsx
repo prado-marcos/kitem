@@ -653,7 +653,7 @@ export default function Recipe() {
        </div>
 
       {/* Modal de Compartilhamento */}
-      <div className={`fixed inset-0 z-50 transition-all duration-150 ease-out ${
+      <div className={`fixed inset-0 z-[9999] transition-all duration-150 ease-out modal-overlay ${
         showShareModal 
           ? 'opacity-100 pointer-events-auto' 
           : 'opacity-0 pointer-events-none'
@@ -710,7 +710,7 @@ export default function Recipe() {
 
       {/* Popup de Login */}
       {showLoginPopup && (
-        <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[99999]">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <div className="text-center">
               <h3 className="text-lg font-semibold mb-4" style={{ color: "#9e000e" }}>
