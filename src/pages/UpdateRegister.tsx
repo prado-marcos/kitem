@@ -1,4 +1,4 @@
-import { Box, Button, TextField, Typography } from "@mui/material";
+import { Box, Button, TextField, Typography, Snackbar, Alert } from "@mui/material";
 import { useState, ChangeEvent, FormEvent } from "react";
 
 interface FormData {
@@ -18,6 +18,11 @@ export default function EditProfile() {
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
+
+  // Snackbar states
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error" | "info">("success");
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
@@ -59,15 +64,21 @@ export default function EditProfile() {
         return response.json();
       })
       .then(() => {
-        alert("Dados atualizados com sucesso!");
+        setSnackbarMessage("Dados atualizados com sucesso!");
+        setSnackbarSeverity("success");
+        setSnackbarOpen(true);
       })
       .catch(() => {
-        alert("Erro ao atualizar dados");
+        setSnackbarMessage("Erro ao atualizar dados");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
       });
   }
 
   function handleChangePassword() {
-    alert("Funcionalidade de alterar senha ainda não implementada");
+    setSnackbarMessage("Funcionalidade de alterar senha ainda não implementada");
+    setSnackbarSeverity("info"); // Assuming 'info' for a placeholder
+    setSnackbarOpen(true);
   }
 
   return (
@@ -127,6 +138,12 @@ export default function EditProfile() {
           </Button>
         </Box>
       </form>
+
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)}>
+        <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

@@ -222,7 +222,7 @@ export default function Home() {
       if (selectedFilters.dificuldade)
         params.append("dificuldade", selectedFilters.dificuldade);
       if (selectedFilters.tempo)
-        params.append("tempo_preparo", selectedFilters.tempo);
+        params.append("tempo_preparo", converterMinutosParaHora(selectedFilters.tempo));
 
       // Adiciona os ingredientes selecionados ao payload
       if (selectedIngredients.length > 0) {
@@ -752,4 +752,30 @@ function converterHoraParaMinutos(hora: string): number {
   const minutos = parseInt(partes[1], 10);
   const segundos = partes[2] ? parseInt(partes[2], 10) : 0;
   return horas * 60 + minutos + Math.round(segundos / 60);
+}
+
+function converterMinutosParaHora(minutos: string): string {
+  try {
+    console.log('Convertendo minutos para hora (filtro):', minutos);
+    const totalMinutos = parseInt(minutos, 10);
+    
+    if (isNaN(totalMinutos) || totalMinutos < 0) {
+      console.warn('Minutos inválidos fornecidos (filtro):', minutos);
+      return "00:00:00";
+    }
+
+    const horas = Math.floor(totalMinutos / 60);
+    const minutosRestantes = totalMinutos % 60;
+    
+    // Formata para hh:mm:ss
+    const horasFormatadas = horas.toString().padStart(2, '0');
+    const minutosFormatados = minutosRestantes.toString().padStart(2, '0');
+    
+    const resultado = `${horasFormatadas}:${minutosFormatados}:00`;
+    console.log('Resultado da conversão (filtro):', resultado);
+    return resultado;
+  } catch (error) {
+    console.error('Erro ao converter minutos para hora (filtro):', error, 'Minutos fornecidos:', minutos);
+    return "00:00:00";
+  }
 }

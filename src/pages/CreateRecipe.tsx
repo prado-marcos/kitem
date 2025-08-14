@@ -155,8 +155,18 @@ export default function RecipeRegister({
       valid = false;
     }
     if (!formData.tempo_preparo.trim()) {
+      console.log('Campo tempo_preparo está vazio ou inválido:', formData.tempo_preparo);
       newErrors.tempo_preparo = "Tempo de preparo é obrigatório";
       valid = false;
+    } else {
+      const tempoNumero = parseInt(formData.tempo_preparo, 10);
+      if (isNaN(tempoNumero) || tempoNumero <= 0) {
+        console.log('Campo tempo_preparo não é um número válido:', formData.tempo_preparo);
+        newErrors.tempo_preparo = "Tempo de preparo deve ser um número maior que zero";
+        valid = false;
+      } else {
+        console.log('Campo tempo_preparo é válido:', formData.tempo_preparo);
+      }
     }
     if (!formData.imagem.trim()) {
       newErrors.imagem = "URL da foto é obrigatória";
@@ -215,16 +225,22 @@ export default function RecipeRegister({
         throw new Error("Usuário não autenticado");
       }
 
+      // Converte minutos para formato de tempo da API (hh:mm:ss)
+      console.log('Valor do campo tempo_preparo antes da conversão:', formData.tempo_preparo);
+      const tempoFormatado = converterMinutosParaHora(formData.tempo_preparo);
+
       const payload = {
         titulo: formData.titulo || null,
         descricao: formData.descricao || null,
-        tempo_preparo: formData.tempo_preparo || null,
+        tempo_preparo: tempoFormatado,
         dificuldade: formData.dificuldade || null,
         tipo: formData.tipo || null,
         restricao_alimentar: formData.restricao_alimentar || null,
         imagem: formData.imagem || null,
         id_usuario: parseInt(userId),
       };
+
+      console.log('Payload sendo enviado para a API:', payload);
 
       // Criar a receita
       const recipeResponse = await api.post("/receitas/", payload);
@@ -772,4 +788,31 @@ export default function RecipeRegister({
       </form>
     </Box>
   );
+}
+
+// Função para converter minutos para formato de tempo da API (hh:mm:ss)
+function converterMinutosParaHora(minutos: string): string {
+  try {
+    console.log('Convertendo minutos para hora:', minutos);
+    const totalMinutos = parseInt(minutos, 10);
+    
+    if (isNaN(totalMinutos) || totalMinutos < 0) {
+      console.warn('Minutos inválidos fornecidos:', minutos);
+      return "00:00:00";
+    }
+
+    const horas = Math.floor(totalMinutos / 60);
+    const minutosRestantes = totalMinutos % 60;
+    
+    // Formata para hh:mm:ss
+    const horasFormatadas = horas.toString().padStart(2, '0');
+    const minutosFormatados = minutosRestantes.toString().padStart(2, '0');
+    
+    const resultado = `${horasFormatadas}:${minutosFormatados}:00`;
+    console.log('Resultado da conversão:', resultado);
+    return resultado;
+  } catch (error) {
+    console.error('Erro ao converter minutos para hora:', error, 'Minutos fornecidos:', minutos);
+    return "00:00:00";
+  }
 }
