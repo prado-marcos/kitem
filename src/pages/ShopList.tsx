@@ -10,6 +10,8 @@ import {
     TableRow,
     TextField,
     Typography,
+    Snackbar,
+    Alert,
   } from "@mui/material";
   import { Plus, Trash2 } from "lucide-react";
   import { useState, FormEvent } from "react";
@@ -32,6 +34,11 @@ import {
         : [{ name: "", quantity: "1", price: "0" }]
     );
   
+    // Snackbar states
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState("");
+    const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("error");
+  
     function handleItemChange(index: number, field: keyof ShopItem, value: string) {
       const newItems = [...items];
       newItems[index][field] = value;
@@ -52,7 +59,9 @@ import {
       // Validação simples: não permitir itens sem nome
       const validItems = items.filter((item) => item.name.trim());
       if (validItems.length === 0) {
-        alert("Adicione pelo menos um item com nome válido.");
+        setSnackbarMessage("Adicione pelo menos um item com nome válido.");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
         return;
       }
   
@@ -166,6 +175,17 @@ import {
             </Button>
           </Box>
         </form>
+  
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={6000}
+          onClose={() => setSnackbarOpen(false)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        >
+          <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: "100%" }}>
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
       </Box>
     );
   }

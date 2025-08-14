@@ -11,6 +11,7 @@ import PrivateRoute from "./PrivateRoute";
 import UpdateRegister from "../pages/UpdateRegister";
 import CreateRecipe from "../pages/CreateRecipe";
 import ListaItens from "../pages/ListaItens";
+import Favoritos from "../pages/Favoritos";
 
 function AppRouter() {
   return (
@@ -22,6 +23,14 @@ function AppRouter() {
           <Route path="/cadastro" element={<Register />} />
           <Route path="/receita/:id" element={<Recipe />} />
           <Route path="/receitas" element={<RecipeList />} />
+          <Route
+            path="/favoritos"
+            element={
+              <PrivateRoute>
+                <Favoritos />
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/gerenciamento-receitas"
             element={

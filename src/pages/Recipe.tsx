@@ -1,10 +1,13 @@
 // Receita.tsx
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Heart, Share2, ListPlus, X, Plus, Minus, Trash2 } from "lucide-react";
+import { Heart, Share2, ListPlus, X, Plus, Minus, Trash2, Copy, Check } from "lucide-react";
+import Select from "react-select";
 import api from "../services/api";
 import { useAuth } from "../hooks/useAuth";
-import { CircularProgress } from "@mui/material";
+import { CircularProgress, Snackbar, Alert } from "@mui/material";
+import { UNIDADES_MEDIDA_OPTIONS } from "../constants/units";
+import { selectStyles } from "../components/SelectStyles";
 
 interface IngredienteRecipeProps {
   quantity: number;
@@ -38,11 +41,27 @@ export default function Recipe() {
   const [showModal, setShowModal] = useState(false);
   const [ingredientesModal, setIngredientesModal] = useState<IngredienteModalProps[]>([]);
   const [showLoginPopup, setShowLoginPopup] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showCopyCheck, setShowCopyCheck] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isAddingToList, setIsAddingToList] = useState(false);
+
+  // Snackbar states
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
+
   const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchRecipe() {
+      if (!id) return; // Verifica se o ID existe
+      
       try {
+        // Obtém o ID do usuário logado
+        const userId = localStorage.getItem("userId");
+        setCurrentUserId(userId);
+
         const response = await api.get(`/receitas/${id}`);
         const responseDetalhada = await api.get(`/receitas/${id}/detalhada`);
         const data = response.data;
@@ -62,7 +81,39 @@ export default function Recipe() {
           difficulty: data.dificuldade,
           time: converterHoraParaMinutos(data.tempo_preparo),
         });
-        setFavorite(dataDetalhada.favorito)
+
+        // Verifica se a receita é favorita do usuário logado
+        if (userId) {
+          try {
+            console.log("Verificando favoritos para usuário:", userId, "e receita:", id);
+            
+            // Usa o endpoint específico para favoritos do usuário
+            const favoritosResponse = await api.get(`/usuarios/${userId}/favoritos/`);
+            console.log("Resposta da API de favoritos:", favoritosResponse.data);
+            
+            // Os dados já vêm filtrados pelo usuário
+            const userFavorites = favoritosResponse.data;
+            
+            console.log("Favoritos do usuário:", userFavorites);
+            
+            // Verifica se a receita atual está na lista de favoritos
+            const isUserFavorite = userFavorites.some((favorite: any) => {
+              const favoriteRecipeId = favorite.id_receita || favorite.receita?.id || favorite.receita_id;
+              console.log("Verificando favorito:", favorite, "ID da receita:", favoriteRecipeId, "ID atual:", id);
+              return favoriteRecipeId === parseInt(id);
+            });
+            
+            console.log("É favorita do usuário?", isUserFavorite);
+            setFavorite(isUserFavorite);
+          } catch (error) {
+            console.error("Erro ao verificar favorito:", error);
+            // Se não conseguir verificar, assume que não é favorita
+            setFavorite(false);
+          }
+        } else {
+          console.log("Usuário não logado, definindo favorito como false");
+          setFavorite(false);
+        }
 
       } catch (error) {
         console.error("Erro ao buscar receita:", error);
@@ -87,8 +138,36 @@ export default function Recipe() {
     setIngredientesModal(ingredientes);
   }
 
-  function handleFavorite() {
-    setFavorite(!isFavorite);
+  async function handleFavorite() {
+    // Verifica se o usuário está logado
+    if (!isAuthenticated) {
+      setShowLoginPopup(true);
+      return;
+    }
+
+    try {
+      if (!currentUserId || !id) {
+        console.error("Usuário não autenticado ou ID da receita inválido");
+        return;
+      }
+
+      if (isFavorite) {
+        // Remove dos favoritos - usa o endpoint de detalhe
+        await api.delete(`/usuarios/${currentUserId}/favoritos/${id}/`);
+      } else {
+        // Adiciona aos favoritos - usa o endpoint de criação
+        await api.post(`/favoritos/`, {
+          id_usuario: parseInt(currentUserId),
+          id_receita: parseInt(id)
+        });
+      }
+      
+      setFavorite(!isFavorite);
+    } catch (error) {
+      console.error("Erro ao atualizar favoritos:", error);
+      // Reverte o estado em caso de erro
+      setFavorite(isFavorite);
+    }
   }
   
   function openModalItemList() {
@@ -99,6 +178,53 @@ export default function Recipe() {
   function closeModal() {
     setShowModal(false);
     setIngredientesModal([]);
+  }
+
+  function openShareModal() {
+    setShowShareModal(true);
+  }
+
+  function closeShareModal() {
+    setShowShareModal(false);
+  }
+
+  function copyToClipboard() {
+    try {
+      const currentUrl = window.location.href;
+      
+      if (!currentUrl) {
+        console.error('URL inválida para copiar');
+        return;
+      }
+
+      navigator.clipboard.writeText(currentUrl).then(() => {
+        // Mostrar ícone de check temporariamente
+        setShowCopyCheck(true);
+        setTimeout(() => {
+          setShowCopyCheck(false);
+        }, 2000); // Volta ao ícone de cópia após 2 segundos
+      }).catch(err => {
+        console.error('Erro ao copiar URL:', err);
+        // Fallback para navegadores mais antigos
+        try {
+          const textArea = document.createElement('textarea');
+          textArea.value = currentUrl;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+          
+          setShowCopyCheck(true);
+          setTimeout(() => {
+            setShowCopyCheck(false);
+          }, 2000);
+        } catch (fallbackError) {
+          console.error('Erro no fallback de cópia:', fallbackError);
+        }
+      });
+    } catch (error) {
+      console.error('Erro geral ao copiar URL:', error);
+    }
   }
 
   function updateQuantidade(index: number, increment: boolean) {
@@ -128,6 +254,15 @@ export default function Recipe() {
     }));
   }
 
+  function updateUnidadeMedida(index: number, novaUnidade: string) {
+    setIngredientesModal(prev => prev.map((item, i) => {
+      if (i === index) {
+        return { ...item, unidade_medida: novaUnidade };
+      }
+      return item;
+    }));
+  }
+
   function excluirItem(index: number) {
     setIngredientesModal(prev => prev.filter((_, i) => i !== index));
   }
@@ -139,10 +274,16 @@ export default function Recipe() {
       return;
     }
 
+    // Ativa o estado de loading
+    setIsAddingToList(true);
+
     try {
       const userId = localStorage.getItem("userId");
       if (!userId) {
-        alert("Usuário não autenticado");
+        setSnackbarMessage("Usuário não autenticado");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
+        setIsAddingToList(false);
         return;
       }
 
@@ -163,7 +304,9 @@ export default function Recipe() {
         }
       } catch (error) {
         console.error('Erro ao verificar/criar lista de compras:', error);
-        alert('Erro ao acessar lista de compras');
+        setSnackbarMessage("Erro ao acessar lista de compras");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
         return;
       }
 
@@ -201,14 +344,21 @@ export default function Recipe() {
         }
       }
       
-      alert("Ingredientes adicionados à lista de compras com sucesso!");
+      setSnackbarMessage("Ingredientes adicionados à lista de compras com sucesso!");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
       closeModal();
       
       // Redireciona para a página de Lista de Itens
       navigate("/lista-itens");
     } catch (error) {
       console.error("Erro ao adicionar à lista:", error);
-      alert("Erro ao adicionar ingredientes à lista de compras");
+      setSnackbarMessage("Erro ao adicionar ingredientes à lista de compras");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      // Desativa o estado de loading
+      setIsAddingToList(false);
     }
   }
 
@@ -220,6 +370,10 @@ export default function Recipe() {
     setShowLoginPopup(false);
     closeModal();
     navigate("/login");
+  }
+
+  function handleCloseSnackbar() {
+    setSnackbarOpen(false);
   }
   
   
@@ -287,6 +441,7 @@ export default function Recipe() {
              <ListPlus className="h-6 w-6 my-2" />
            </button>
            <button 
+             onClick={openShareModal}
              title="Compartilhar receita"
              className="hover:bg-gray-100 p-1 rounded transition-colors cursor-pointer"
            >
@@ -323,7 +478,7 @@ export default function Recipe() {
       <p>{recipe.description}</p>
       
              {/* Modal de Ingredientes */}
-       <div className={`fixed inset-0 z-50 transition-all duration-150 ease-out ${
+       <div className={`fixed inset-0 z-[9998] transition-all duration-150 ease-out ${
          showModal 
            ? 'opacity-100 pointer-events-auto' 
            : 'opacity-0 pointer-events-none'
@@ -334,7 +489,7 @@ export default function Recipe() {
          <div className={`fixed inset-0 flex items-center justify-center transition-all duration-200 ease-out ${
            showModal ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'
          }`}>
-           <div className="bg-white/99 backdrop-blur-md rounded-lg p-6 w-[600px] max-h-[80vh] overflow-y-auto shadow-2xl border border-gray-200/50 transform transition-all duration-200 ease-out">
+           <div className="bg-white/99 backdrop-blur-md rounded-lg p-6 w-[1000px] max-h-[80vh] overflow-y-auto shadow-2xl border border-gray-200/50 transform transition-all duration-200 ease-out">
             {/* Header do Modal */} 
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold" style={{ color: "#9e000e" }}>
@@ -342,7 +497,12 @@ export default function Recipe() {
               </h2>
                              <button
                  onClick={closeModal}
-                 className="text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
+                 disabled={isAddingToList}
+                 className={`text-gray-500 transition-colors cursor-pointer ${
+                   isAddingToList 
+                     ? 'opacity-50 cursor-not-allowed' 
+                     : 'hover:text-gray-700'
+                 }`}
                >
                  <X className="h-6 w-6" />
                </button>
@@ -356,7 +516,7 @@ export default function Recipe() {
                    <p className="font-semibold text-gray-700 text-sm">Ingrediente</p>
                  </div>
                  <div className="col-span-4 text-center">
-                   <p className="font-semibold text-gray-700 text-sm">Quantidade & Medida</p>
+                   <p className="font-semibold text-gray-700 text-sm">Quantidade & Unidade</p>
                  </div>
                  <div className="col-span-2 text-center">
                    <p className="font-semibold text-gray-700 text-sm">Excluir</p>
@@ -390,18 +550,14 @@ export default function Recipe() {
                          <Minus className="h-4 w-4" />
                        </button>
                        
-                                               <div className="flex items-center space-x-1 flex-shrink-0">
-                          <input
-                            type="number"
-                            min="1"
-                            value={ingrediente.quantidade}
-                            onChange={(e) => updateQuantidadeManual(index, e.target.value)}
-                            className="w-16 text-center font-semibold text-gray-700 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                          />
-                          <span className="w-20 text-center text-sm text-gray-600 font-medium truncate">
-                            {ingrediente.unidade_medida}
-                          </span>
-                        </div>
+                       <input
+                         type="number"
+                         min="1"
+                         value={ingrediente.quantidade}
+                         onChange={(e) => updateQuantidadeManual(index, e.target.value)}
+                         className="w-20 text-center font-semibold text-gray-700 border border-gray-300 rounded py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                         style={{ paddingLeft: '0', paddingRight: '0' }}
+                       />
                        
                        <button
                          onClick={() => updateQuantidade(index, true)}
@@ -415,10 +571,33 @@ export default function Recipe() {
                          >
                          <Plus className="h-4 w-4" />
                        </button>
+                       
+                       <Select
+                         value={{ value: ingrediente.unidade_medida, label: ingrediente.unidade_medida }}
+                         onChange={(option) => updateUnidadeMedida(index, option?.value || ingrediente.unidade_medida)}
+                         options={UNIDADES_MEDIDA_OPTIONS}
+                         styles={{
+                           ...selectStyles,
+                           menuPortal: (base) => ({
+                             ...base,
+                             zIndex: 9999,
+                           }),
+                           menu: (base) => ({
+                             ...base,
+                             zIndex: 9999,
+                           }),
+                         }}
+                         className="w-32"
+                         classNamePrefix="select"
+                         isSearchable={false}
+                         menuPlacement="auto"
+                         menuPosition="fixed"
+                         menuPortalTarget={document.body}
+                       />
                      </div>
 
                      {/* Botão Excluir - Ocupa 2 colunas */}
-                     <div className="col-span-2 flex justify-end">
+                     <div className="col-span-2 flex justify-center">
                        <button
                          onClick={() => excluirItem(index)}
                          className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-100 ease-out hover:scale-105 active:scale-95 flex-shrink-0 cursor-pointer"
@@ -442,8 +621,8 @@ export default function Recipe() {
              <div className="flex justify-end">
                <button
                  onClick={adicionarALista}
-                 disabled={ingredientesModal.length === 0}
-                 className="px-6 py-2 text-white font-semibold rounded-md shadow-md transition-all duration-150 ease-out transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                 disabled={ingredientesModal.length === 0 || isAddingToList}
+                 className="px-6 py-2 text-white font-semibold rounded-md shadow-md transition-all duration-150 ease-out transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                  style={{
                    backgroundColor: "#9e000e",
                    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)"
@@ -459,12 +638,75 @@ export default function Recipe() {
                    }
                  }}
                >
-                 Adicionar
+                 {isAddingToList ? (
+                   <>
+                     <CircularProgress size={16} style={{ color: 'white' }} />
+                     <span>Adicionando...</span>
+                   </>
+                 ) : (
+                   "Adicionar"
+                 )}
                </button>
              </div>
            </div>
          </div>
        </div>
+
+      {/* Modal de Compartilhamento */}
+      <div className={`fixed inset-0 z-50 transition-all duration-150 ease-out ${
+        showShareModal 
+          ? 'opacity-100 pointer-events-auto' 
+          : 'opacity-0 pointer-events-none'
+      }`}>
+        <div className={`fixed inset-0 transition-all duration-150 ease-out ${
+          showShareModal ? 'bg-opacity-10 backdrop-blur-sm' : 'bg-opacity-50 backdrop-blur-none'
+        }`} onClick={closeShareModal}></div>
+        <div className={`fixed inset-0 flex items-center justify-center transition-all duration-200 ease-out ${
+          showShareModal ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'
+        }`}>
+          <div className="bg-white/99 backdrop-blur-md rounded-lg p-6 w-[400px] max-h-[80vh] overflow-y-auto shadow-2xl border border-gray-200/50 transform transition-all duration-200 ease-out">
+            {/* Header do Modal */} 
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold" style={{ color: "#9e000e" }}>
+                Compartilhar Receita
+              </h2>
+              <button
+                onClick={closeShareModal}
+                className="text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            {/* Conteúdo do Modal */}
+            <div className="space-y-4">
+              <p className="text-gray-600 text-sm">
+                Compartilhe esta receita de {recipe.title} com seus amigos copiando o link abaixo:
+              </p>
+              
+              <div className="bg-gray-100 p-3 rounded-lg border border-gray-200">
+                <p className="text-sm text-gray-700 break-all">
+                  {window.location.href}
+                </p>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  onClick={copyToClipboard}
+                  title="Copiar URL"
+                  className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-full transition-all duration-150 ease-out transform hover:scale-105 active:scale-95"
+                >
+                  {showCopyCheck ? (
+                    <Check className="h-5 w-5 text-green-600" />
+                  ) : (
+                    <Copy className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Popup de Login */}
       {showLoginPopup && (
@@ -502,15 +744,53 @@ export default function Recipe() {
           </div>
         </div>
       )}
+
+      {/* Snackbar para notificações */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbarSeverity}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }
 
 function converterHoraParaMinutos(hora: string): number {
-  const partes = hora.split(":");
-  const horas = parseInt(partes[0], 10);
-  const minutos = parseInt(partes[1], 10);
-  const segundos = partes[2] ? parseInt(partes[2], 10) : 0;
-  const totalMinutos = horas * 60 + minutos + Math.round(segundos / 60);
-  return totalMinutos;
+  try {
+    if (!hora || typeof hora !== 'string') {
+      console.warn('Hora inválida fornecida:', hora);
+      return 0;
+    }
+
+    const partes = hora.split(":");
+    
+    if (partes.length < 2) {
+      console.warn('Formato de hora inválido:', hora);
+      return 0;
+    }
+
+    const horas = parseInt(partes[0], 10);
+    const minutos = parseInt(partes[1], 10);
+    const segundos = partes[2] ? parseInt(partes[2], 10) : 0;
+    
+    if (isNaN(horas) || isNaN(minutos) || isNaN(segundos)) {
+      console.warn('Valores de hora inválidos:', { horas, minutos, segundos });
+      return 0;
+    }
+    
+    const totalMinutos = horas * 60 + minutos + Math.round(segundos / 60);
+    return Math.max(0, totalMinutos); // Garante que não seja negativo
+  } catch (error) {
+    console.error('Erro ao converter hora para minutos:', error, 'Hora fornecida:', hora);
+    return 0;
+  }
 }
