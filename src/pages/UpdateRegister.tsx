@@ -1,28 +1,48 @@
-import { Box, Button, TextField, Typography, Snackbar, Alert } from "@mui/material";
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Snackbar,
+  Alert,
+} from "@mui/material";
 import { useState, ChangeEvent, FormEvent } from "react";
+import api from "../services/api";
 
-interface FormData {
-  name: string;
+type FormData = {
+  firstName: string;
+  lastName: string;
   email: string;
-}
+  userName: string;
+};
 
-interface FormErrors {
-  name?: string;
+type FormErrors = {
+  firstName?: string;
+  lastName?: string;
   email?: string;
-}
+  userName?: string;
+};
+
+const userId = localStorage.getItem("userId");
+const res = await api.get(`/usuarios/${userId}`);
+const user = {
+  firstName: res.data.first_name,
+  email: res.data.email,
+  userName: res.data.username,
+  lastName: res.data.last_name,
+};
 
 export default function EditProfile() {
-  const [formData, setFormData] = useState<FormData>({
-    name: "",
-    email: "",
-  });
+  const [formData, setFormData] = useState<FormData>(user);
 
   const [errors, setErrors] = useState<FormErrors>({});
 
   // Snackbar states
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error" | "info">("success");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<
+    "success" | "error" | "info"
+  >("success");
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
@@ -33,8 +53,14 @@ export default function EditProfile() {
   function validate() {
     const newErrors: FormErrors = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = "Nome é obrigatório";
+    if (!formData.userName.trim()) {
+      newErrors.firstName = "Nome de usuário é obrigatório";
+    }
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = "Nome é obrigatório";
+    }
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = "Sobrenome é obrigatório";
     }
 
     if (!formData.email.trim()) {
@@ -48,35 +74,35 @@ export default function EditProfile() {
     return Object.keys(newErrors).length === 0;
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!validate()) return;
-
-    // Envio para API
-    fetch("/api/update-profile", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    })
-      .then((response) => {
-        if (!response.ok) throw new Error("Falha ao atualizar dados");
-        return response.json();
-      })
-      .then(() => {
+    try {
+      const res = await api.patch(`/usuarios/${userId}/`, {
+        first_name: formData.firstName,
+        email: formData.email,
+        username: formData.userName,
+        last_name: formData.lastName,
+      });
+      if (res.status === 200) {
         setSnackbarMessage("Dados atualizados com sucesso!");
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
-      })
-      .catch(() => {
-        setSnackbarMessage("Erro ao atualizar dados");
-        setSnackbarSeverity("error");
-        setSnackbarOpen(true);
-      });
+      }
+    } catch (error) {
+      setSnackbarMessage(
+        "Ocorreu um erro ao atualizar o cadastro. Por favor, tente novamente."
+      );
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
   }
 
   function handleChangePassword() {
-    setSnackbarMessage("Funcionalidade de alterar senha ainda não implementada");
+    setSnackbarMessage(
+      "Funcionalidade de alterar senha ainda não implementada"
+    );
     setSnackbarSeverity("info"); // Assuming 'info' for a placeholder
     setSnackbarOpen(true);
   }
@@ -88,15 +114,37 @@ export default function EditProfile() {
           Editar Dados
         </Typography>
         <TextField
-          name="name"
-          label="Nome"
-          value={formData.name}
+          name="userName"
+          label="Nome de Usuário"
+          value={formData.userName}
           onChange={handleChange}
           variant="outlined"
           sx={{ mb: 2 }}
           className="w-100"
-          error={Boolean(errors.name)}
-          helperText={errors.name}
+          error={Boolean(errors.userName)}
+          helperText={errors.userName}
+        />
+        <TextField
+          name="firstName"
+          label="Nome"
+          value={formData.firstName}
+          onChange={handleChange}
+          variant="outlined"
+          sx={{ mb: 2 }}
+          className="w-100"
+          error={Boolean(errors.firstName)}
+          helperText={errors.firstName}
+        />
+        <TextField
+          name="lastName"
+          label="Sobrenome"
+          value={formData.lastName}
+          onChange={handleChange}
+          variant="outlined"
+          sx={{ mb: 2 }}
+          className="w-100"
+          error={Boolean(errors.lastName)}
+          helperText={errors.lastName}
         />
         <TextField
           name="email"
@@ -139,8 +187,16 @@ export default function EditProfile() {
         </Box>
       </form>
 
-      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)}>
-        <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpen(false)}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarSeverity}
+          sx={{ width: "100%" }}
+        >
           {snackbarMessage}
         </Alert>
       </Snackbar>
