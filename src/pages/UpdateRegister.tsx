@@ -5,8 +5,9 @@ import {
   Typography,
   Snackbar,
   Alert,
+  CircularProgress,
 } from "@mui/material";
-import { useState, ChangeEvent, FormEvent } from "react";
+import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import api from "../services/api";
 
 type FormData = {
@@ -23,19 +24,18 @@ type FormErrors = {
   userName?: string;
 };
 
-const userId = localStorage.getItem("userId");
-const res = await api.get(`/usuarios/${userId}`);
-const user = {
-  firstName: res.data.first_name,
-  email: res.data.email,
-  userName: res.data.username,
-  lastName: res.data.last_name,
-};
-
 export default function EditProfile() {
-  const [formData, setFormData] = useState<FormData>(user);
+  const userId = localStorage.getItem("userId");
+
+  const [formData, setFormData] = useState<FormData>({
+    firstName: "",
+    lastName: "",
+    email: "",
+    userName: "",
+  });
 
   const [errors, setErrors] = useState<FormErrors>({});
+  const [loading, setLoading] = useState(true);
 
   // Snackbar states
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -44,17 +44,42 @@ export default function EditProfile() {
     "success" | "error" | "info"
   >("success");
 
+  // Carregar dados do usuário
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const res = await api.get(`/usuarios/${userId}`);
+        setFormData({
+          firstName: res.data.first_name,
+          lastName: res.data.last_name,
+          email: res.data.email,
+          userName: res.data.username,
+        });
+      } catch (error) {
+        setSnackbarMessage("Erro ao carregar dados do usuário.");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (userId) {
+      fetchUser();
+    }
+  }, [userId]);
+
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: "" })); // Limpa erro ao digitar
+    setErrors((prev) => ({ ...prev, [name]: "" }));
   }
 
   function validate() {
     const newErrors: FormErrors = {};
 
     if (!formData.userName.trim()) {
-      newErrors.firstName = "Nome de usuário é obrigatório";
+      newErrors.userName = "Nome de usuário é obrigatório";
     }
     if (!formData.firstName.trim()) {
       newErrors.firstName = "Nome é obrigatório";
@@ -81,9 +106,9 @@ export default function EditProfile() {
     try {
       const res = await api.patch(`/usuarios/${userId}/`, {
         first_name: formData.firstName,
+        last_name: formData.lastName,
         email: formData.email,
         username: formData.userName,
-        last_name: formData.lastName,
       });
       if (res.status === 200) {
         setSnackbarMessage("Dados atualizados com sucesso!");
@@ -103,8 +128,23 @@ export default function EditProfile() {
     setSnackbarMessage(
       "Funcionalidade de alterar senha ainda não implementada"
     );
-    setSnackbarSeverity("info"); // Assuming 'info' for a placeholder
+    setSnackbarSeverity("info");
     setSnackbarOpen(true);
+  }
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
+        <CircularProgress
+          style={{ color: "#9e000e" }}
+          size={64}
+          thickness={4}
+        />
+        <p className="mt-4 text-lg font-semibold text-gray-600">
+          Carregando seus dados, por favor aguarde...
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -120,7 +160,6 @@ export default function EditProfile() {
           onChange={handleChange}
           variant="outlined"
           sx={{ mb: 2 }}
-          className="w-100"
           error={Boolean(errors.userName)}
           helperText={errors.userName}
         />
@@ -131,7 +170,6 @@ export default function EditProfile() {
           onChange={handleChange}
           variant="outlined"
           sx={{ mb: 2 }}
-          className="w-100"
           error={Boolean(errors.firstName)}
           helperText={errors.firstName}
         />
@@ -142,7 +180,6 @@ export default function EditProfile() {
           onChange={handleChange}
           variant="outlined"
           sx={{ mb: 2 }}
-          className="w-100"
           error={Boolean(errors.lastName)}
           helperText={errors.lastName}
         />
@@ -154,7 +191,6 @@ export default function EditProfile() {
           onChange={handleChange}
           variant="outlined"
           sx={{ mb: 2 }}
-          className="w-100"
           error={Boolean(errors.email)}
           helperText={errors.email}
         />
