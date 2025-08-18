@@ -53,6 +53,7 @@ export default function RecipeEdit({
   const userId = localStorage.getItem("userId");
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
+  const [ingredientIds, setIngredientIds] = useState<number[]>([]);
   const [errorUsuario, setErrorUsuario] = useState(false);
   const [formData, setFormData] = useState<RecipeData>({
     titulo: "",
@@ -98,6 +99,10 @@ export default function RecipeEdit({
           const ingredientsResponse = await api.get(
             `/receitas/${id}/ingredientes/`
           );
+          const ingredientIdsArray = ingredientsResponse.data.map(
+            (item: any) => item.id_ingrediente
+          );
+          setIngredientIds(ingredientIdsArray);
 
           const ingredientes = await Promise.all(
             ingredientsResponse.data.map(async (item: any) => {
@@ -281,8 +286,6 @@ export default function RecipeEdit({
         throw new Error("Usuário não autenticado");
       }
 
-      await api.delete(`/receitas/${id}/`)
-
       // Converte minutos para formato de tempo da API (hh:mm:ss)
       console.log(
         "Valor do campo tempo_preparo antes da conversão:",
@@ -303,8 +306,14 @@ export default function RecipeEdit({
 
       console.log("Payload sendo enviado para a API:", payload);
 
+      await Promise.all(
+        ingredientIds.map(async (item: any) => {
+          return await api.delete(`/ingredientes/${item}/`);
+        })
+      );
+
       // editar a receita
-      const recipeResponse = await api.post("/receitas/", payload);
+      const recipeResponse = await api.patch(`/receitas/${id}/`, payload);
 
       const recipeId = recipeResponse.data.id;
 
