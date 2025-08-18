@@ -7,6 +7,7 @@ import {
   Alert,
   CircularProgress,
 } from "@mui/material";
+import { Eye, EyeOff } from "lucide-react";
 import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import api from "../services/api";
 
@@ -15,6 +16,9 @@ type FormData = {
   lastName: string;
   email: string;
   userName: string;
+  currentPassword?: string;
+  newPassword?: string;
+  confirmPassword?: string;
 };
 
 type FormErrors = {
@@ -22,6 +26,9 @@ type FormErrors = {
   lastName?: string;
   email?: string;
   userName?: string;
+  currentPassword?: string;
+  newPassword?: string;
+  confirmPassword?: string;
 };
 
 export default function EditProfile() {
@@ -32,8 +39,12 @@ export default function EditProfile() {
     lastName: "",
     email: "",
     userName: "",
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
-
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(true);
 
@@ -94,6 +105,27 @@ export default function EditProfile() {
       newErrors.email = "Email inválido";
     }
 
+    const passwordFieldsFilled =
+      !!formData.newPassword || !!formData.confirmPassword;
+
+    if (passwordFieldsFilled) {
+      if (!formData.newPassword) {
+        newErrors.newPassword = "Informe a nova senha";
+      } else if (formData.newPassword && formData.newPassword.length < 6) {
+        newErrors.newPassword = "Nova senha deve ter pelo menos 6 caracteres";
+      }
+      if (!formData.confirmPassword) {
+        newErrors.confirmPassword = "Confirme a nova senha";
+      }
+      if (
+        formData.newPassword &&
+        formData.confirmPassword &&
+        formData.newPassword !== formData.confirmPassword
+      ) {
+        newErrors.confirmPassword = "As senhas não coincidem";
+      }
+    }
+
     setErrors(newErrors);
 
     return Object.keys(newErrors).length === 0;
@@ -104,12 +136,23 @@ export default function EditProfile() {
 
     if (!validate()) return;
     try {
-      const res = await api.patch(`/usuarios/${userId}/`, {
+      type Body = {
+        first_name: string;
+        last_name: string;
+        email: string;
+        username: string;
+        password?: string;
+      };
+      const body: Body = {
         first_name: formData.firstName,
         last_name: formData.lastName,
         email: formData.email,
         username: formData.userName,
-      });
+      };
+      if (formData.newPassword) {
+        body.password = formData.newPassword;
+      }
+      const res = await api.patch(`/usuarios/${userId}/`, body);
       if (res.status === 200) {
         setSnackbarMessage("Dados atualizados com sucesso!");
         setSnackbarSeverity("success");
@@ -122,14 +165,6 @@ export default function EditProfile() {
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
     }
-  }
-
-  function handleChangePassword() {
-    setSnackbarMessage(
-      "Funcionalidade de alterar senha ainda não implementada"
-    );
-    setSnackbarSeverity("info");
-    setSnackbarOpen(true);
   }
 
   if (loading) {
@@ -194,23 +229,64 @@ export default function EditProfile() {
           error={Boolean(errors.email)}
           helperText={errors.email}
         />
+
+        {/* Nova Senha */}
+        <Box className="relative">
+          <TextField
+            name="newPassword"
+            type={showNewPassword ? "text" : "password"}
+            label="Digite a nova senha"
+            value={formData.newPassword}
+            onChange={handleChange}
+            variant="outlined"
+            sx={{ mb: 2 }}
+            className="w-100"
+            error={Boolean(errors.newPassword)}
+            helperText={errors.newPassword}
+          />
+          <button
+            onClick={() => setShowNewPassword(!showNewPassword)}
+            className="absolute top-5 right-5"
+            type="button"
+          >
+            {showNewPassword ? (
+              <EyeOff className="w-5 h-5" />
+            ) : (
+              <Eye className="w-5 h-5" />
+            )}
+          </button>
+        </Box>
+
+        {/* Confirmar Nova Senha */}
+        <Box className="relative">
+          <TextField
+            name="confirmPassword"
+            type={showConfirmPassword ? "text" : "password"}
+            label="Confirme a nova senha"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            variant="outlined"
+            sx={{ mb: 2 }}
+            className="w-100"
+            error={Boolean(errors.confirmPassword)}
+            helperText={errors.confirmPassword}
+          />
+          <button
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            className="absolute top-5 right-5"
+            type="button"
+          >
+            {showConfirmPassword ? (
+              <EyeOff className="w-5 h-5" />
+            ) : (
+              <Eye className="w-5 h-5" />
+            )}
+          </button>
+        </Box>
         <Box className="flex flex-row gap-2">
           <Button
-            type="button"
-            className="w-[50%]"
-            onClick={handleChangePassword}
-            sx={{
-              backgroundColor: "#ffffff",
-              "&:hover": { backgroundColor: "#f0f0f0" },
-              color: "#000000",
-            }}
-            variant="contained"
-          >
-            Alterar Senha
-          </Button>
-          <Button
             type="submit"
-            className="w-[50%]"
+            className="w-[100%]"
             variant="contained"
             sx={{
               backgroundColor: "#000000",

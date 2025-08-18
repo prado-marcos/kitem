@@ -2,17 +2,17 @@ import { Alert, Box, Button, Snackbar, TextField } from "@mui/material";
 import { useState, ChangeEvent, FormEvent } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
-interface FormData {
+type FormData = {
   currentPassword: string;
   newPassword: string;
   confirmPassword: string;
-}
+};
 
-interface FormErrors {
+type FormErrors = {
   currentPassword?: string;
   newPassword?: string;
   confirmPassword?: string;
-}
+};
 
 export default function UpdatePassword() {
   const [formData, setFormData] = useState<FormData>({
@@ -29,7 +29,9 @@ export default function UpdatePassword() {
 
   const [snackBarOpen, setSnackBarOpen] = useState(false);
   const [snackBarMessage, setSnackBarMessage] = useState("");
-  const [snackBarSeverity, setSnackBarSeverity] = useState<"success" | "error">("success");
+  const [snackBarSeverity, setSnackBarSeverity] = useState<"success" | "error">(
+    "success"
+  );
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
@@ -77,7 +79,11 @@ export default function UpdatePassword() {
         setSnackBarMessage("Senha atualizada com sucesso!");
         setSnackBarSeverity("success");
         setSnackBarOpen(true);
-        setFormData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+        setFormData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
       })
       .catch(() => {
         setSnackBarMessage("Erro ao atualizar senha");
