@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
 import { CircularProgress, Button, TextField, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert } from '@mui/material';
 import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
 import { Plus, Minus, Trash2, Edit, List } from 'lucide-react';
 import Select from 'react-select';
 import { selectStyles } from '../components/SelectStyles';
-import { UNIDADES_MEDIDA, UNIDADES_MEDIDA_OPTIONS } from '../constants/units';
+import { UNIDADES_MEDIDA_OPTIONS } from '../constants/units';
 
 interface Item {
   id: number;
