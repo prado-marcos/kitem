@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { CircularProgress, Button, TextField, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert } from '@mui/material';
 import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
 import { Plus, Minus, Trash2, Edit, List } from 'lucide-react';
 import Select from 'react-select';
+import CreatableSelect from 'react-select/creatable';
 import { selectStyles } from '../components/SelectStyles';
-import { UNIDADES_MEDIDA, UNIDADES_MEDIDA_OPTIONS } from '../constants/units';
+import { UNIDADES_MEDIDA_OPTIONS } from '../constants/units';
 
 interface Item {
   id: number;
@@ -27,7 +28,7 @@ interface Ingrediente {
 
 interface ItemFormData {
   nome: string;
-  quantidade: number;
+  quantidade: number | string;
   unidade_medida: string;
 }
 
@@ -41,8 +42,8 @@ export default function ListaItens() {
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [formData, setFormData] = useState<ItemFormData>({
     nome: '',
-    quantidade: 1,
-    unidade_medida: 'un'
+    quantidade: '',
+    unidade_medida: 'UN'
   });
 
   // Snackbar states
@@ -51,6 +52,8 @@ export default function ListaItens() {
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error" | "warning">("success");
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [isEditingItem, setIsEditingItem] = useState(false);
+  const [showClearConfirmDialog, setShowClearConfirmDialog] = useState(false);
+  const [isClearingList, setIsClearingList] = useState(false);
 
   // Usando constantes compartilhadas para unidades de medida
 
@@ -169,6 +172,14 @@ export default function ListaItens() {
       const userId = localStorage.getItem("userId");
       if (!userId) return;
 
+      // Validar quantidade
+      if (formData.quantidade === '' || formData.quantidade === 0 || formData.quantidade === '0') {
+        setSnackbarMessage("A quantidade deve ser maior que zero!");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
+        return;
+      }
+
       // Buscar ou criar a lista de itens do usuário
       const listaItens = await buscarOuCriarListaUsuario(userId);
 
@@ -214,14 +225,15 @@ export default function ListaItens() {
           unidade_medida: formData.unidade_medida
         });
 
-        // Recarregar itens
+        // Recarregar itens e ingredientes
         await carregarItens();
+        await carregarIngredientes();
         
         // Limpar formulário
         setFormData({
           nome: '',
-          quantidade: 1,
-          unidade_medida: 'un'
+          quantidade: '',
+          unidade_medida: 'UN'
         });
         setShowAddDialog(false);
 
@@ -258,6 +270,14 @@ export default function ListaItens() {
       setIsEditingItem(true);
 
       if (!editingItem) {
+        return;
+      }
+
+      // Validar quantidade
+      if (editingItem.quantidade === 0 || editingItem.quantidade < 0.1) {
+        setSnackbarMessage("A quantidade deve ser maior que zero!");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
         return;
       }
       const listaUsuario = await buscarOuCriarListaUsuario(editingItem.usuario.toString());
@@ -313,10 +333,61 @@ export default function ListaItens() {
     setSnackbarOpen(false);
   }
 
+  function abrirDialogoAdicao() {
+    // Limpar formulário ao abrir o modal
+    setFormData({
+      nome: '',
+      quantidade: '',
+      unidade_medida: 'UN'
+    });
+    setShowAddDialog(true);
+  }
+
   function atualizarQuantidade(item: Item, incremento: boolean) {
     if (editingItem && editingItem.id === item.id) {
-      const novaQuantidade = incremento ? item.quantidade + 1 : Math.max(1, item.quantidade - 1);
-      setEditingItem({ ...editingItem, quantidade: novaQuantidade });
+      const novaQuantidade = incremento ? item.quantidade + 0.1 : Math.max(0, item.quantidade - 0.1);
+      setEditingItem({ ...editingItem, quantidade: parseFloat(novaQuantidade.toFixed(1)) });
+    }
+  }
+
+  async function esvaziarLista() {
+    try {
+      setIsClearingList(true);
+      const userId = localStorage.getItem("userId");
+      if (!userId) return;
+
+      // Buscar a lista do usuário
+      const listaUsuario = await buscarOuCriarListaUsuario(userId);
+      
+      // Buscar todos os itens da lista do usuário
+      const response = await api.get('/lista-itens-ingredientes/');
+      const userItems = response.data.filter((item: any) => 
+        item.id_lista === listaUsuario.id
+      );
+
+      // Deletar todos os itens da lista
+      for (const item of userItems) {
+        await api.delete(`/lista-itens-ingredientes/${item.id}/`);
+      }
+
+      // Atualizar a lista local
+      setItems([]);
+      
+      // Fechar dialog de confirmação
+      setShowClearConfirmDialog(false);
+      
+      // Mostrar mensagem de sucesso
+      setSnackbarMessage("Lista de itens esvaziada com sucesso!");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+      
+    } catch (error) {
+      console.error('Erro ao esvaziar lista:', error);
+      setSnackbarMessage("Erro ao esvaziar lista de itens");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setIsClearingList(false);
     }
   }
 
@@ -357,20 +428,45 @@ export default function ListaItens() {
             Lista de Itens
           </h1>
         </div>
-        <Button
-          variant="contained"
-          startIcon={<Plus />}
-          onClick={() => setShowAddDialog(true)}
-          sx={{
-            backgroundColor: "#9e000e",
-            "&:hover": { backgroundColor: "#7c000b" },
-            borderRadius: "8px",
-            px: 3,
-            py: 1.5
-          }}
-        >
-          Adicionar Item
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            variant="outlined"
+            startIcon={<Trash2 />}
+            onClick={() => setShowClearConfirmDialog(true)}
+            disabled={items.length === 0}
+            sx={{
+              color: "#9e000e",
+              borderColor: "#9e000e",
+              "&:hover": { 
+                backgroundColor: "#fef2f2",
+                borderColor: "#7c000b"
+              },
+              "&:disabled": {
+                color: "#9ca3af",
+                borderColor: "#e5e7eb"
+              },
+              borderRadius: "8px",
+              px: 3,
+              py: 1.5
+            }}
+          >
+            Esvaziar Lista
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<Plus />}
+            onClick={abrirDialogoAdicao}
+            sx={{
+              backgroundColor: "#9e000e",
+              "&:hover": { backgroundColor: "#7c000b" },
+              borderRadius: "8px",
+              px: 3,
+              py: 1.5
+            }}
+          >
+            Adicionar Item
+          </Button>
+        </div>
       </div>
 
       {items.length === 0 ? (
@@ -449,22 +545,28 @@ export default function ListaItens() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Nome do Item
               </label>
-              <Select
-                options={ingredientes.map(ing => ({ value: ing.nome, label: ing.nome }))}
+              <CreatableSelect
+                options={ingredientes
+                  .filter((ing, index, self) => 
+                    index === self.findIndex(i => i.nome.toLowerCase() === ing.nome.toLowerCase())
+                  )
+                  .map(ing => ({ value: ing.nome, label: ing.nome }))}
+                value={formData.nome ? { value: formData.nome, label: formData.nome } : null}
                 onChange={(option) => setFormData({ ...formData, nome: option?.value || '' })}
                 placeholder="Digite ou selecione um ingrediente..."
                 isSearchable
                 isClearable
+                isDisabled={isAddingItem}
                 noOptionsMessage={() => "Nenhum ingrediente encontrado"}
                 loadingMessage={() => "Carregando..."}
                 isLoading={loadingIngredientes}
                 menuPortalTarget={document.body}
                 styles={selectStyles}
-                onInputChange={(inputValue) => {
-                  if (inputValue && !ingredientes.find(ing => ing.nome.toLowerCase() === inputValue.toLowerCase())) {
-                    setFormData({ ...formData, nome: inputValue });
-                  }
+                formatCreateLabel={(inputValue: string) => `Criar "${inputValue}"`}
+                onCreateOption={(inputValue: string) => {
+                  setFormData({ ...formData, nome: inputValue });
                 }}
+                createOptionPosition="first"
               />
             </div>
             
@@ -476,9 +578,18 @@ export default function ListaItens() {
                 <TextField
                   type="number"
                   value={formData.quantidade}
-                  onChange={(e) => setFormData({ ...formData, quantidade: Math.max(1, parseInt(e.target.value) || 1) })}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value);
+                    if (e.target.value === '') {
+                      setFormData({ ...formData, quantidade: '' });
+                    } else if (!isNaN(value) && value >= 0) {
+                      setFormData({ ...formData, quantidade: value });
+                    }
+                  }}
                   fullWidth
                   size="small"
+                  disabled={isAddingItem}
+                  inputProps={{ step: "0.1", min: "0" }}
                 />
               </div>
               
@@ -489,9 +600,10 @@ export default function ListaItens() {
                 <Select
                   options={UNIDADES_MEDIDA_OPTIONS}
                   value={{ value: formData.unidade_medida, label: formData.unidade_medida }}
-                  onChange={(option) => setFormData({ ...formData, unidade_medida: option?.value || 'un' })}
+                  onChange={(option) => setFormData({ ...formData, unidade_medida: option?.value || 'UN' })}
                   placeholder="Selecione..."
                   isSearchable
+                  isDisabled={isAddingItem}
                   menuPortalTarget={document.body}
                   styles={selectStyles}
                 />
@@ -529,7 +641,7 @@ export default function ListaItens() {
           </Button>
           <Button
             onClick={adicionarItem}
-            disabled={!formData.nome.trim() || isAddingItem}
+            disabled={!formData.nome.trim() || isAddingItem || formData.quantidade === '' || formData.quantidade === 0 || formData.quantidade === '0'}
             variant="contained"
             startIcon={isAddingItem ? <CircularProgress size={16} color="inherit" /> : null}
             sx={{
@@ -595,13 +707,20 @@ export default function ListaItens() {
                   
                   <TextField
                     type="number"
-                    value={editingItem?.quantidade || 1}
-                    onChange={(e) => editingItem && setEditingItem({ 
-                      ...editingItem, 
-                      quantidade: Math.max(1, parseInt(e.target.value) || 1) 
-                    })}
+                    value={editingItem?.quantidade || 0}
+                    onChange={(e) => {
+                      if (editingItem) {
+                        const value = parseFloat(e.target.value);
+                        if (e.target.value === '') {
+                          setEditingItem({ ...editingItem, quantidade: 0 });
+                        } else if (!isNaN(value) && value >= 0) {
+                          setEditingItem({ ...editingItem, quantidade: value });
+                        }
+                      }
+                    }}
                     size="small"
                     sx={{ width: '80px' }}
+                    inputProps={{ step: "0.1", min: "0" }}
                   />
                   
                   <IconButton
@@ -620,10 +739,10 @@ export default function ListaItens() {
                 </label>
                 <Select
                   options={UNIDADES_MEDIDA_OPTIONS}
-                  value={{ value: editingItem?.unidade_medida || 'un', label: editingItem?.unidade_medida || 'un' }}
+                  value={{ value: editingItem?.unidade_medida || 'UN', label: editingItem?.unidade_medida || 'UN' }}
                   onChange={(option) => editingItem && setEditingItem({ 
                     ...editingItem, 
-                    unidade_medida: option?.value || 'un' 
+                    unidade_medida: option?.value || 'UN' 
                   })}
                   placeholder="Selecione..."
                   isSearchable
@@ -664,7 +783,7 @@ export default function ListaItens() {
            </Button>
                      <Button
              onClick={editarItem}
-             disabled={isEditingItem}
+             disabled={isEditingItem || !editingItem || editingItem.quantidade === 0 || editingItem.quantidade < 0.1}
              variant="contained"
              startIcon={isEditingItem ? <CircularProgress size={16} color="inherit" /> : null}
              sx={{
@@ -692,6 +811,82 @@ export default function ListaItens() {
            >
              {isEditingItem ? "Salvando..." : "Salvar"}
            </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog de confirmação para esvaziar lista */}
+      <Dialog open={showClearConfirmDialog} onClose={() => setShowClearConfirmDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle style={{ color: "#9e000e", textAlign: "center" }}>
+          Esvaziar a Lista de Itens?
+        </DialogTitle>
+        <DialogContent>
+          <div className="pt-2 text-center">
+            <p className="text-gray-700">
+              Tem certeza que deseja esvaziar toda a lista de itens? Esta ação não pode ser desfeita.
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              {items.length} item(s) será(ão) removido(s) e a lista será esvaziada.
+            </p>
+          </div>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, pt: 2, gap: 2 }}>
+          <Button 
+            onClick={() => setShowClearConfirmDialog(false)}
+            disabled={isClearingList}
+            variant="outlined"
+            sx={{
+              color: "#6b7280",
+              borderColor: "#d1d5db",
+              "&:hover": { 
+                backgroundColor: isClearingList ? "#f9fafb" : "#f9fafb",
+                borderColor: isClearingList ? "#d1d5db" : "#9ca3af"
+              },
+              "&:disabled": {
+                color: "#9ca3af",
+                borderColor: "#e5e7eb"
+              },
+              textTransform: "none",
+              fontSize: "16px",
+              fontWeight: "500",
+              px: 4,
+              py: 1.5,
+              borderRadius: "8px",
+              minWidth: "120px",
+              opacity: isClearingList ? 0.6 : 1
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={esvaziarLista}
+            disabled={isClearingList}
+            variant="contained"
+            startIcon={isClearingList ? <CircularProgress size={16} color="inherit" /> : null}
+            sx={{
+              backgroundColor: "#9e000e",
+              "&:hover": { 
+                backgroundColor: isClearingList ? "#9e000e" : "#7c000b",
+                boxShadow: isClearingList ? "0 2px 8px 0 rgba(158, 0, 14, 0.2)" : "0 4px 14px 0 rgba(158, 0, 14, 0.3)"
+              },
+              "&:disabled": {
+                backgroundColor: "#d1d5db",
+                color: "#9ca3af"
+              },
+              color: "white",
+              textTransform: "none",
+              fontSize: "16px",
+              fontWeight: "600",
+              px: 4,
+              py: 1.5,
+              borderRadius: "8px",
+              minWidth: "120px",
+              boxShadow: "0 2px 8px 0 rgba(158, 0, 14, 0.2)",
+              transition: "all 0.2s ease-in-out",
+              opacity: isClearingList ? 0.8 : 1
+            }}
+          >
+            {isClearingList ? "Esvaziando..." : "Esvaziar Lista"}
+          </Button>
         </DialogActions>
       </Dialog>
 

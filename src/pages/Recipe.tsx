@@ -1,7 +1,7 @@
 // Receita.tsx
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Heart, Share2, ListPlus, X, Plus, Minus, Trash2, Copy, Check } from "lucide-react";
+import { Heart, Share2, ListPlus, X, Plus, Minus, Copy, Check } from "lucide-react";
 import Select from "react-select";
 import api from "../services/api";
 import { useAuth } from "../hooks/useAuth";
@@ -20,6 +20,7 @@ interface IngredienteModalProps {
   nome_ingrediente: string;
   quantidade: number;
   unidade_medida: string;
+  selecionado: boolean;
 }
 
 interface RecipeProps {
@@ -67,6 +68,16 @@ export default function Recipe() {
         const data = response.data;
         const dataDetalhada = responseDetalhada.data;
         const ingredientes = dataDetalhada.ingredientes;
+
+        // Incrementar visualizações da receita
+        try {
+          await api.patch(`/receitas/${id}/`, {
+            quantidade_visualizacao: (data.quantidade_visualizacao || 0) + 1
+          });
+        } catch (error) {
+          console.error('Erro ao incrementar visualizações:', error);
+          // Não interrompe o carregamento da receita se houver erro na contagem
+        }
 
         setRecipe({
           title: data.titulo,
@@ -133,6 +144,7 @@ export default function Recipe() {
       nome_ingrediente: ingredient.ingredient,
       quantidade: ingredient.quantity,
       unidade_medida: ingredient.unitMeasure,
+      selecionado: true,
     }));
     
     setIngredientesModal(ingredientes);
@@ -263,8 +275,21 @@ export default function Recipe() {
     }));
   }
 
-  function excluirItem(index: number) {
-    setIngredientesModal(prev => prev.filter((_, i) => i !== index));
+  function toggleSelecaoItem(index: number) {
+    setIngredientesModal(prev => prev.map((item, i) => {
+      if (i === index) {
+        return { ...item, selecionado: !item.selecionado };
+      }
+      return item;
+    }));
+  }
+
+  function toggleSelecionarTodos() {
+    const todosSelecionados = ingredientesModal.every(ingrediente => ingrediente.selecionado);
+    setIngredientesModal(prev => prev.map(item => ({
+      ...item,
+      selecionado: !todosSelecionados
+    })));
   }
 
   async function adicionarALista() {
@@ -310,8 +335,10 @@ export default function Recipe() {
         return;
       }
 
-      // Adicionar cada ingrediente à lista de compras
-      for (const ingrediente of ingredientesModal) {
+      // Adicionar cada ingrediente selecionado à lista de compras
+      const ingredientesSelecionados = ingredientesModal.filter(ingrediente => ingrediente.selecionado);
+      
+      for (const ingrediente of ingredientesSelecionados) {
         try {
           // Buscar ou criar o ingrediente
           let ingredienteExistente;
@@ -332,13 +359,44 @@ export default function Recipe() {
             continue;
           }
 
-          // Adicionar à lista de compras
-          await api.post('/listas_compras_ingredientes/', {
-            id_ingrediente: ingredienteExistente.id,
-            id_lista: listaCompras.id,
-            quantidade: ingrediente.quantidade,
-            unidade_medida: ingrediente.unidade_medida
-          });
+          // Verificar se já existe na lista de compras
+          try {
+            const listaComprasIngredientesResponse = await api.get('/listas_compras_ingredientes/');
+            const itemExistente = listaComprasIngredientesResponse.data.find((item: any) => 
+              item.id_ingrediente === ingredienteExistente.id && 
+              item.id_lista === listaCompras.id
+            );
+
+            if (itemExistente) {
+              // Se já existe, somar a quantidade nova com a existente
+              const quantidadeExistente = parseFloat(itemExistente.quantidade.toString());
+              const quantidadeNova = parseFloat(ingrediente.quantidade.toString());
+              const quantidadeTotal = quantidadeExistente + quantidadeNova;
+              await api.put(`/listas_compras_ingredientes/${itemExistente.id}/`, {
+                id_ingrediente: ingredienteExistente.id,
+                id_lista: listaCompras.id,
+                quantidade: quantidadeTotal.toString(),
+                unidade_medida: ingrediente.unidade_medida
+              });
+            } else {
+              // Se não existe, criar novo
+              await api.post('/listas_compras_ingredientes/', {
+                id_ingrediente: ingredienteExistente.id,
+                id_lista: listaCompras.id,
+                quantidade: ingrediente.quantidade,
+                unidade_medida: ingrediente.unidade_medida
+              });
+            }
+          } catch (error) {
+            console.error('Erro ao verificar/atualizar item na lista de compras:', error);
+            // Em caso de erro na verificação, tenta criar novo
+            await api.post('/listas_compras_ingredientes/', {
+              id_ingrediente: ingredienteExistente.id,
+              id_lista: listaCompras.id,
+              quantidade: ingrediente.quantidade,
+              unidade_medida: ingrediente.unidade_medida
+            });
+          }
         } catch (error) {
           console.error(`Erro ao adicionar ingrediente ${ingrediente.nome_ingrediente}:`, error);
         }
@@ -430,36 +488,8 @@ export default function Recipe() {
 
   return (
     <div className="flex flex-col my-12 mx-80 gap-5">
-      <div className="flex flex-row justify-between items-center">
-        <h1 className="text-4xl font-bold mb-2">{recipe.title}</h1>
-                 <div className="flex flex-row gap-x-2">
-           <button 
-             onClick={openModalItemList}
-             title="Adicionar ingredientes à lista de itens"
-             className="hover:bg-gray-100 p-1 rounded transition-colors cursor-pointer"
-           >
-             <ListPlus className="h-6 w-6 my-2" />
-           </button>
-           <button 
-             onClick={openShareModal}
-             title="Compartilhar receita"
-             className="hover:bg-gray-100 p-1 rounded transition-colors cursor-pointer"
-           >
-             <Share2 className="h-6 w-6 my-2" />
-           </button>
-           <button 
-             onClick={handleFavorite}
-             title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-             className="hover:bg-gray-100 p-1 rounded transition-colors cursor-pointer"
-           >
-             {isFavorite ? (
-               <Heart className="fill-red-500 h-6 w-6 my-2" />
-             ) : (
-               <Heart className="fill-white h-6 w-6 my-2" />
-             )}
-           </button>
-         </div>
-      </div>
+      {/* Título da Receita */}
+      <h1 className="text-4xl font-bold">{recipe.title}</h1>
       <span className="flex justify-center">
         <img
           src={recipe.imageUrl}
@@ -467,11 +497,50 @@ export default function Recipe() {
           className="max-w-md h-auto object-cover rounded-sm"
         />
       </span>
+      
+      {/* Bloco de Ações da Receita */}
+      <div className="flex flex-col gap-3 items-center">
+        {/* Primeira linha - Compartilhar e Favoritar */}
+        <div className="flex flex-row gap-3 justify-center">
+          <button 
+            onClick={openShareModal}
+            className="flex flex-row items-center justify-center gap-3 px-4 py-3 rounded-lg border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md h-12 w-40 whitespace-nowrap"
+          >
+            <Share2 className="h-5 w-5 text-gray-700" />
+            <span className="text-sm font-medium text-gray-700">Compartilhar</span>
+          </button>
+          
+          <button 
+            onClick={handleFavorite}
+            className="flex flex-row items-center justify-center gap-3 px-4 py-3 rounded-lg border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md h-12 w-40 whitespace-nowrap"
+          >
+            {isFavorite ? (
+              <Heart className="fill-red-500 h-5 w-5 text-red-500" />
+            ) : (
+              <Heart className="h-5 w-5 text-gray-700" />
+            )}
+            <span className="text-sm font-medium text-gray-700">
+              {isFavorite ? "Favorito" : "Favoritar"}
+            </span>
+          </button>
+        </div>
+        
+        {/* Segunda linha - Adicionar Ingredientes */}
+        <button 
+          onClick={openModalItemList}
+          className="flex flex-row items-center justify-center gap-3 px-8 py-3 rounded-lg border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md h-12 w-96 whitespace-nowrap"
+        >
+          <ListPlus className="h-5 w-5 text-gray-700" />
+          <span className="text-sm font-medium text-gray-700">Adicionar Ingredientes à Lista de Itens</span>
+        </button>
+      </div>
+      
       <div className="flex flex-row">
         <p className="font-bold">
           Dificuldade: {recipe.difficulty} | Tempo de Preparo: {recipe.time} min
         </p>
       </div>
+      
       <h3 className="text-lg font-semibold">Ingredientes</h3>
       <ul>{ingredientsArr}</ul>
       <h3 className="text-lg font-semibold">Modo de Preparo</h3>
@@ -519,14 +588,56 @@ export default function Recipe() {
                    <p className="font-semibold text-gray-700 text-sm">Quantidade & Unidade</p>
                  </div>
                  <div className="col-span-2 text-center">
-                   <p className="font-semibold text-gray-700 text-sm">Excluir</p>
+                   <div className="flex items-center justify-center space-x-2">
+                     <button
+                       onClick={toggleSelecionarTodos}
+                       disabled={isAddingToList}
+                       className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-100 ease-out flex-shrink-0 ${
+                         isAddingToList 
+                           ? 'cursor-not-allowed opacity-50' 
+                           : 'cursor-pointer hover:scale-105 active:scale-95'
+                       }`}
+                       style={{
+                         backgroundColor: ingredientesModal.every(ing => ing.selecionado) ? "#dc2626" : "#e5e7eb",
+                         color: ingredientesModal.every(ing => ing.selecionado) ? "white" : "#6b7280"
+                       }}
+                       onMouseOver={(e) => {
+                         if (!isAddingToList) {
+                           if (ingredientesModal.every(ing => ing.selecionado)) {
+                             e.currentTarget.style.backgroundColor = "#b91c1c";
+                           } else {
+                             e.currentTarget.style.backgroundColor = "#d1d5db";
+                           }
+                         }
+                       }}
+                       onMouseOut={(e) => {
+                         if (!isAddingToList) {
+                           if (ingredientesModal.every(ing => ing.selecionado)) {
+                             e.currentTarget.style.backgroundColor = "#dc2626";
+                           } else {
+                             e.currentTarget.style.backgroundColor = "#e5e7eb";
+                           }
+                         }
+                       }}
+                       title={isAddingToList ? "Adicionando itens..." : (ingredientesModal.every(ing => ing.selecionado) ? "Desmarcar todos" : "Marcar todos")}
+                     >
+                       {ingredientesModal.every(ing => ing.selecionado) ? (
+                         <Check className="h-3 w-3" />
+                       ) : (
+                         <div className="w-2 h-2 border-2 border-gray-400 rounded-sm"></div>
+                       )}
+                     </button>
+                     <p className="font-semibold text-gray-700 text-sm">Selecionar</p>
+                   </div>
                  </div>
                </div>
               
               {ingredientesModal.map((ingrediente, index) => (
                                      <div
                      key={ingrediente.id}
-                     className="grid grid-cols-12 gap-4 items-center p-4 border border-gray-200 rounded-lg bg-gray-50"
+                     className={`grid grid-cols-12 gap-4 items-center p-4 border border-gray-200 rounded-lg transition-all duration-200 ${
+                       ingrediente.selecionado ? 'bg-gray-50 opacity-100' : 'bg-gray-100 opacity-50'
+                     }`}
                    >
                      {/* Nome do Ingrediente - Ocupa 6 colunas */}
                      <div className="col-span-6">
@@ -539,7 +650,8 @@ export default function Recipe() {
                      <div className="col-span-4 flex items-center justify-center space-x-2">
                        <button
                          onClick={() => updateQuantidade(index, false)}
-                         className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-100 ease-out flex-shrink-0 cursor-pointer hover:scale-105 active:scale-95"
+                         disabled={isAddingToList}
+                         className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-100 ease-out flex-shrink-0 cursor-pointer hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                          style={{
                            backgroundColor: "#9e000e",
                            color: "white"
@@ -555,13 +667,15 @@ export default function Recipe() {
                          min="1"
                          value={ingrediente.quantidade}
                          onChange={(e) => updateQuantidadeManual(index, e.target.value)}
-                         className="w-20 text-center font-semibold text-gray-700 border border-gray-300 rounded py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                         disabled={isAddingToList}
+                         className="w-20 text-center font-semibold text-gray-700 border border-gray-300 rounded py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                          style={{ paddingLeft: '0', paddingRight: '0' }}
                        />
                        
                        <button
                          onClick={() => updateQuantidade(index, true)}
-                         className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-100 ease-out flex-shrink-0 cursor-pointer hover:scale-105 active:scale-95"
+                         disabled={isAddingToList}
+                         className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-100 ease-out flex-shrink-0 cursor-pointer hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                          style={{
                            backgroundColor: "#9e000e",
                            color: "white"
@@ -576,6 +690,7 @@ export default function Recipe() {
                          value={{ value: ingrediente.unidade_medida, label: ingrediente.unidade_medida }}
                          onChange={(option) => updateUnidadeMedida(index, option?.value || ingrediente.unidade_medida)}
                          options={UNIDADES_MEDIDA_OPTIONS}
+                         isDisabled={isAddingToList}
                          styles={{
                            ...selectStyles,
                            menuPortal: (base) => ({
@@ -596,20 +711,37 @@ export default function Recipe() {
                        />
                      </div>
 
-                     {/* Botão Excluir - Ocupa 2 colunas */}
+                     {/* Checkbox de Seleção - Ocupa 2 colunas */}
                      <div className="col-span-2 flex justify-center">
                        <button
-                         onClick={() => excluirItem(index)}
-                         className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-100 ease-out hover:scale-105 active:scale-95 flex-shrink-0 cursor-pointer"
+                         onClick={() => toggleSelecaoItem(index)}
+                         disabled={isAddingToList}
+                         className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-100 ease-out hover:scale-105 active:scale-95 flex-shrink-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                          style={{
-                           backgroundColor: "#dc2626",
-                           color: "white"
+                           backgroundColor: ingrediente.selecionado ? "#dc2626" : "#e5e7eb",
+                           color: ingrediente.selecionado ? "white" : "#6b7280"
                          }}
-                         onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#b91c1c")}
-                         onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#dc2626")}
-                         title="Excluir ingrediente"
+                         onMouseOver={(e) => {
+                           if (ingrediente.selecionado) {
+                             e.currentTarget.style.backgroundColor = "#b91c1c";
+                           } else {
+                             e.currentTarget.style.backgroundColor = "#d1d5db";
+                           }
+                         }}
+                         onMouseOut={(e) => {
+                           if (ingrediente.selecionado) {
+                             e.currentTarget.style.backgroundColor = "#dc2626";
+                           } else {
+                             e.currentTarget.style.backgroundColor = "#e5e7eb";
+                           }
+                         }}
+                         title={ingrediente.selecionado ? "Desmarcar ingrediente" : "Marcar ingrediente"}
                        >
-                         <Trash2 className="h-4 w-4" />
+                         {ingrediente.selecionado ? (
+                           <Check className="h-4 w-4" />
+                         ) : (
+                           <div className="w-3 h-3 border-2 border-gray-400 rounded-sm"></div>
+                         )}
                        </button>
                      </div>
                    </div>
@@ -621,7 +753,7 @@ export default function Recipe() {
              <div className="flex justify-end">
                <button
                  onClick={adicionarALista}
-                 disabled={ingredientesModal.length === 0 || isAddingToList}
+                 disabled={ingredientesModal.filter(ing => ing.selecionado).length === 0 || isAddingToList}
                  className="px-6 py-2 text-white font-semibold rounded-md shadow-md transition-all duration-150 ease-out transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                  style={{
                    backgroundColor: "#9e000e",
@@ -644,7 +776,7 @@ export default function Recipe() {
                      <span>Adicionando...</span>
                    </>
                  ) : (
-                   "Adicionar"
+                   `Adicionar ${ingredientesModal.filter(ing => ing.selecionado).length} Item(s) à Lista de Itens`
                  )}
                </button>
              </div>
