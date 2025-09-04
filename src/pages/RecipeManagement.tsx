@@ -7,15 +7,14 @@ import api from "../services/api";
 import { CircularProgress } from "@mui/material";
 const altImage = "https://freesvg.org/img/mealplate.png";
 
-interface RecipeProps {
+type RecipeProps = {
   id: number;
   title: string;
   imageUrl: string;
   time: string;
-  viewCount: number;
+  rating: number;
   difficulty: string;
-  rating?: number;
-}
+};
 
 export default function RecipeManagement() {
   // const [query, setQuery] = useState("");
@@ -78,34 +77,13 @@ export default function RecipeManagement() {
         <h3 className="text-1xl font-bold text-white text-shadow-lg">
           Adicione e gerencie suas receitas facilmente.
         </h3>
-        {/* <div className="flex items-center gap-1">
-          <input
-            type="text"
-            placeholder="Buscar..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="bg-white rounded-sm px-2 py-1 w-100"
-          />
-          <Button
-            onClick={handleSearch}
-            title="Buscar"
-            type="button"
-            sx={{
-              backgroundColor: "#D9D9D9",
-              "&:hover": { backgroundColor: "#f0f0f0" },
-              color: "#000000",
-            }}
-            variant="contained"
-          >
-            <Search className="size-5" />
-          </Button>
-        </div> */}
       </div>
       {myRecipes.length ? (
         <RecipeCarousel
           title="Minhas Receitas"
           subTitle=""
           recipes={myRecipes}
+          managementMode={true} // <- habilita botões
         />
       ) : (
         ""

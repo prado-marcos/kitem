@@ -10,6 +10,7 @@ import RecipeManagement from "../pages/RecipeManagement";
 import PrivateRoute from "./PrivateRoute";
 import UpdateRegister from "../pages/UpdateRegister";
 import CreateRecipe from "../pages/CreateRecipe";
+import EditRecipe from "../pages/EditRecipe";
 import ListaItens from "../pages/ListaItens";
 import Favoritos from "../pages/Favoritos";
 
@@ -60,6 +61,14 @@ function AppRouter() {
             element={
               <PrivateRoute>
                 <ListaItens />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/edita-receita/:id"
+            element={
+              <PrivateRoute>
+                <EditRecipe />
               </PrivateRoute>
             }
           />

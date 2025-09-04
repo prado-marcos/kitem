@@ -63,10 +63,10 @@ export default function Home() {
   const [selectedIngredients, setSelectedIngredients] = useState<
     MultiValue<{ value: string; label: string }>
   >([]);
-  const [isMultiSelectOpen, setIsMultiSelectOpen] = useState(false);
+  const [_isMultiSelectOpen, setIsMultiSelectOpen] = useState(false);
   const [searchInputValue, setSearchInputValue] = useState("");
-  const [isMultiSelectFocused, setIsMultiSelectFocused] = useState(false);
-  const [isSearchInputFocused, setIsSearchInputFocused] = useState(false);
+  const [isMultiSelectFocused, _setIsMultiSelectFocused] = useState(false);
+  const [isSearchInputFocused, _setIsSearchInputFocused] = useState(false);
 
   // Componente personalizado para exibir os valores selecionados
   const CustomValueContainer = <OptionType, IsMulti extends boolean = true>(
