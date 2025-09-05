@@ -1,7 +1,16 @@
 import axios from "axios";
 
+const getBaseURL = () => {
+  if (import.meta.env.PROD) {
+    // Em produção, aponte diretamente para o seu backend
+    return 'https://back-kitem-e12u.onrender.com';
+  }
+  // Em desenvolvimento, use uma URL relativa para que o proxy do Vite funcione
+  return '';
+};
+
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: getBaseURL(),
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
