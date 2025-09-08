@@ -1,54 +1,102 @@
-# React + TypeScript + Vite
+# 🍳 Kitem - Frontend do Sistema de Gerenciamento de Receitas
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 📋 **Sobre o Sistema**
 
-Currently, two official plugins are available:
+O **Kitem** é uma plataforma web completa para entusiastas da culinária que desejam:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Descobrir novas receitas** através de busca inteligente e filtros personalizados
+- **Criar e gerenciar suas próprias receitas** com ingredientes, instruções e imagens
+- **Organizar listas de itens** necessários para preparar suas receitas favoritas
+- **Salvar receitas favoritas** para acesso rápido e fácil
+- **Explorar receitas por categoria** (doces, salgados, veganos, sem glúten, etc.)
 
-## Expanding the ESLint configuration
+O sistema foi desenvolvido como uma solução prática para quem gosta de cozinhar e quer ter suas receitas organizadas em um só lugar, facilitando o planejamento de refeições e a organização da cozinha.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## ✨ **Funcionalidades**
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+### **Descoberta de Receitas**
+- Busca por título, ingredientes e filtros avançados
+- Filtros por restrições alimentares, tipo, dificuldade e tempo
+- Seleção múltipla de ingredientes
+- Receitas populares e sugestões personalizadas
+
+### **Sistema de Usuário**
+- Login e registro com autenticação
+- Gerenciamento de perfil
+- Sistema de favoritos
+- Lista de itens baseada nas receitas
+
+### **Gerenciamento de Receitas**
+- Criação e edição de receitas
+- Anexo de link com imagem.
+- Sistema completo de ingredientes com quantidades
+- Classificação por dificuldade
+
+### **Lista de Itens**
+- Geração a partir das receitas ou manualmente
+- Gerenciamento interativo de itens
+- Organização e facilitação
+
+## 🛠️ **Tecnologias**
+
+- **React 19** - Interface de usuário
+- **TypeScript** - Tipagem estática
+- **Vite** - Build tool
+- **Tailwind CSS** - Estilização
+- **Material-UI** - Componentes
+- **Framer Motion** - Animações
+- **React Router** - Navegação
+- **Axios** - Comunicação com API
+
+## 🚀 **Instalação e Execução**
+
+### **Pré-requisitos**
+- Node.js (versão 18 ou superior)
+- npm
+
+### **Instalação**
+```bash
+# Clone o repositório
+git clone https://github.com/prado-marcos/kitem.git
+cd kitem
+
+# Instale as dependências
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+### **Execução**
+```bash
+# Modo de desenvolvimento
+npm run dev
 ```
+
+O servidor de desenvolvimento será iniciado em `http://localhost:5173`
+
+## 📁 **Estrutura do Projeto**
+
+```
+src/
+├── components/     # Componentes reutilizáveis
+├── pages/         # Páginas da aplicação
+├── router/        # Configuração de rotas
+├── hooks/         # Custom hooks
+├── services/      # Serviços e API
+├── constants/     # Constantes
+└── assets/        # Recursos estáticos
+```
+
+## 🔧 **Configuração**
+
+O projeto está configurado para usar o backend em produção:
+- **API URL**: `https://back-kitem-e12u.onrender.com/api`
+- **Proxy**: Configurado no Vite para desenvolvimento local
+
+Para usar um backend local, edite `src/services/api.ts` e altere a URL da API.
+
+## 📝 **Scripts Disponíveis**
+
+- `npm run dev` - Servidor de desenvolvimento
+
+---
+
+**Projeto elaborado com caráter facultativo (trabalho de conclusão de disciplina)**
