@@ -22,7 +22,7 @@ function AppRouter() {
           <Route index element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/cadastro" element={<Register />} />
-          <Route path="/receita/:id" element={<Recipe />} />
+          <Route path="/receita/:id/" element={<Recipe />} />
           <Route path="/receitas" element={<RecipeList />} />
           <Route
             path="/favoritos"

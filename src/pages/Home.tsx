@@ -105,7 +105,7 @@ export default function Home() {
     async function fetchRecipes() {
       try {
         console.log("Fazendo chamada para /receitas...");
-        const response = await api.get("/receitas");
+        const response = await api.get("/receitas/");
         console.log("Resposta da API:", response.data);
         const formattedRecipes = response.data.map((recipe: any) => ({
           id: recipe.id,

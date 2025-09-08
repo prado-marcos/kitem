@@ -90,8 +90,8 @@ export default function Recipe() {
         const userId = localStorage.getItem("userId");
         setCurrentUserId(userId);
 
-        const response = await api.get(`/receitas/${id}`);
-        const responseDetalhada = await api.get(`/receitas/${id}/detalhada`);
+        const response = await api.get(`/receitas/${id}/`);
+        const responseDetalhada = await api.get(`/receitas/${id}/detalhada/`);
         const data = response.data;
         const dataDetalhada = responseDetalhada.data;
         const ingredientes = dataDetalhada.ingredientes;

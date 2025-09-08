@@ -177,7 +177,7 @@ export default function Favoritos() {
             Explore receitas e adicione as que mais gostar!
           </Typography>
           <button
-            onClick={() => navigate("/receitas")}
+            onClick={() => navigate("/receitas/")}
             className="mt-6 px-6 py-2 text-white font-semibold rounded-md shadow-md transition-transform transform hover:scale-105"
             style={{
               backgroundColor: "#9e000e",

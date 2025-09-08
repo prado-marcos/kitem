@@ -33,9 +33,9 @@ export default function RecipeList() {
 
         let response;
         if (searchParams.toString()) {
-          response = await api.get(`/receitas/filtrar/?${searchParams.toString()}`);
+          response = await api.get(`/receitas/filtrar/?${searchParams.toString()}/`);
         } else {
-          response = await api.get("/receitas");
+          response = await api.get("/receitas/");
         }
 
         const formattedRecipes = response.data.map((recipe: any) => ({
@@ -125,7 +125,7 @@ export default function RecipeList() {
               key={recipe.id}
               className="bg-white shadow rounded overflow-hidden hover:shadow-lg transition-shadow"
             >
-              <Link to={`/receita/${recipe.id}`}>
+              <Link to={`/receita/${recipe.id}/`}>
                 <img
                   src={recipe.imageUrl}
                   alt={recipe.title}
