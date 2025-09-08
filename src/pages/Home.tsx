@@ -134,7 +134,7 @@ export default function Home() {
     async function fetchIngredients() {
       try {
         console.log("Fazendo chamada para /ingredientes...");
-        const response = await api.get("/ingredientes"); // Endpoint para buscar ingredientes
+        const response = await api.get("/ingredientes/"); // Endpoint para buscar ingredientes
         console.log("Resposta de ingredientes:", response.data);
         const formattedIngredients = response.data.map((ingredient: any) => ({
           value: ingredient.nome,
