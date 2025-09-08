@@ -1,7 +1,17 @@
 // Receita.tsx
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Heart, Share2, ListPlus, X, Plus, Minus, Copy, Check } from "lucide-react";
+import {
+  Heart,
+  Share2,
+  ListPlus,
+  X,
+  Plus,
+  Minus,
+  Copy,
+  Check,
+  Flag,
+} from "lucide-react";
 import Select from "react-select";
 import api from "../services/api";
 import { useAuth } from "../hooks/useAuth";
@@ -40,24 +50,41 @@ export default function Recipe() {
   const [isFavorite, setFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [ingredientesModal, setIngredientesModal] = useState<IngredienteModalProps[]>([]);
+  const [ingredientesModal, setIngredientesModal] = useState<
+    IngredienteModalProps[]
+  >([]);
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showCopyCheck, setShowCopyCheck] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isAddingToList, setIsAddingToList] = useState(false);
 
-  // Snackbar states
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">(
+    "success"
+  );
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState<{
+    value: number;
+    label: string;
+  } | null>(null);
+  const [reportDetail, setReportDetail] = useState("");
+
+  const REPORT_OPTIONS = [
+    { value: 1, label: "Conteúdo Inadequado" },
+    { value: 2, label: "Violação de Direitos Autorais" },
+    { value: 3, label: "Spam ou Publicidade" },
+    { value: 4, label: "Linguagem Ofensiva" },
+    { value: 5, label: "Outro" },
+  ];
 
   const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchRecipe() {
       if (!id) return; // Verifica se o ID existe
-      
+
       try {
         // Obtém o ID do usuário logado
         const userId = localStorage.getItem("userId");
@@ -72,10 +99,10 @@ export default function Recipe() {
         // Incrementar visualizações da receita
         try {
           await api.patch(`/receitas/${id}/`, {
-            quantidade_visualizacao: (data.quantidade_visualizacao || 0) + 1
+            quantidade_visualizacao: (data.quantidade_visualizacao || 0) + 1,
           });
         } catch (error) {
-          console.error('Erro ao incrementar visualizações:', error);
+          console.error("Erro ao incrementar visualizações:", error);
           // Não interrompe o carregamento da receita se houver erro na contagem
         }
 
@@ -96,24 +123,44 @@ export default function Recipe() {
         // Verifica se a receita é favorita do usuário logado
         if (userId) {
           try {
-            console.log("Verificando favoritos para usuário:", userId, "e receita:", id);
-            
+            console.log(
+              "Verificando favoritos para usuário:",
+              userId,
+              "e receita:",
+              id
+            );
+
             // Usa o endpoint específico para favoritos do usuário
-            const favoritosResponse = await api.get(`/usuarios/${userId}/favoritos/`);
-            console.log("Resposta da API de favoritos:", favoritosResponse.data);
-            
+            const favoritosResponse = await api.get(
+              `/usuarios/${userId}/favoritos/`
+            );
+            console.log(
+              "Resposta da API de favoritos:",
+              favoritosResponse.data
+            );
+
             // Os dados já vêm filtrados pelo usuário
             const userFavorites = favoritosResponse.data;
-            
+
             console.log("Favoritos do usuário:", userFavorites);
-            
+
             // Verifica se a receita atual está na lista de favoritos
             const isUserFavorite = userFavorites.some((favorite: any) => {
-              const favoriteRecipeId = favorite.id_receita || favorite.receita?.id || favorite.receita_id;
-              console.log("Verificando favorito:", favorite, "ID da receita:", favoriteRecipeId, "ID atual:", id);
+              const favoriteRecipeId =
+                favorite.id_receita ||
+                favorite.receita?.id ||
+                favorite.receita_id;
+              console.log(
+                "Verificando favorito:",
+                favorite,
+                "ID da receita:",
+                favoriteRecipeId,
+                "ID atual:",
+                id
+              );
               return favoriteRecipeId === parseInt(id);
             });
-            
+
             console.log("É favorita do usuário?", isUserFavorite);
             setFavorite(isUserFavorite);
           } catch (error) {
@@ -125,7 +172,6 @@ export default function Recipe() {
           console.log("Usuário não logado, definindo favorito como false");
           setFavorite(false);
         }
-
       } catch (error) {
         console.error("Erro ao buscar receita:", error);
       } finally {
@@ -136,9 +182,46 @@ export default function Recipe() {
     fetchRecipe();
   }, [id]);
 
+  function openReportModal() {
+    setShowReportModal(true);
+  }
+  function closeReportModal() {
+    setShowReportModal(false);
+    setReportReason(null);
+    setReportDetail("");
+  }
+
+  async function submitReport() {
+    if (!reportReason) {
+      setSnackbarMessage("Por favor, selecione um motivo.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+      return;
+    }
+
+    try {
+      await api.post("/denuncias/lista/", {
+        id_receita: id,
+        motivo_denuncia: reportReason.value,
+        detalhamento: reportDetail,
+        id_denunciante: localStorage.getItem("userId"),
+      });
+
+      setSnackbarMessage("Denúncia enviada com sucesso!");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+      closeReportModal();
+    } catch (error) {
+      console.error("Erro ao enviar denúncia:", error);
+      setSnackbarMessage("Erro ao enviar denúncia.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
+  }
+
   function prepareIngredientesModal() {
     if (!recipe) return;
-    
+
     const ingredientes = recipe.ingredientRecipe.map((ingredient, index) => ({
       id: index,
       nome_ingrediente: ingredient.ingredient,
@@ -146,7 +229,7 @@ export default function Recipe() {
       unidade_medida: ingredient.unitMeasure,
       selecionado: true,
     }));
-    
+
     setIngredientesModal(ingredientes);
   }
 
@@ -170,10 +253,10 @@ export default function Recipe() {
         // Adiciona aos favoritos - usa o endpoint de criação
         await api.post(`/favoritos/`, {
           id_usuario: parseInt(currentUserId),
-          id_receita: parseInt(id)
+          id_receita: parseInt(id),
         });
       }
-      
+
       setFavorite(!isFavorite);
     } catch (error) {
       console.error("Erro ao atualizar favoritos:", error);
@@ -181,7 +264,7 @@ export default function Recipe() {
       setFavorite(isFavorite);
     }
   }
-  
+
   function openModalItemList() {
     setShowModal(true);
     prepareIngredientesModal();
@@ -203,93 +286,112 @@ export default function Recipe() {
   function copyToClipboard() {
     try {
       const currentUrl = window.location.href;
-      
+
       if (!currentUrl) {
-        console.error('URL inválida para copiar');
+        console.error("URL inválida para copiar");
         return;
       }
 
-      navigator.clipboard.writeText(currentUrl).then(() => {
-        // Mostrar ícone de check temporariamente
-        setShowCopyCheck(true);
-        setTimeout(() => {
-          setShowCopyCheck(false);
-        }, 2000); // Volta ao ícone de cópia após 2 segundos
-      }).catch(err => {
-        console.error('Erro ao copiar URL:', err);
-        // Fallback para navegadores mais antigos
-        try {
-          const textArea = document.createElement('textarea');
-          textArea.value = currentUrl;
-          document.body.appendChild(textArea);
-          textArea.select();
-          document.execCommand('copy');
-          document.body.removeChild(textArea);
-          
+      navigator.clipboard
+        .writeText(currentUrl)
+        .then(() => {
+          // Mostrar ícone de check temporariamente
           setShowCopyCheck(true);
           setTimeout(() => {
             setShowCopyCheck(false);
-          }, 2000);
-        } catch (fallbackError) {
-          console.error('Erro no fallback de cópia:', fallbackError);
-        }
-      });
+          }, 2000); // Volta ao ícone de cópia após 2 segundos
+        })
+        .catch((err) => {
+          console.error("Erro ao copiar URL:", err);
+          // Fallback para navegadores mais antigos
+          try {
+            const textArea = document.createElement("textarea");
+            textArea.value = currentUrl;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand("copy");
+            document.body.removeChild(textArea);
+
+            setShowCopyCheck(true);
+            setTimeout(() => {
+              setShowCopyCheck(false);
+            }, 2000);
+          } catch (fallbackError) {
+            console.error("Erro no fallback de cópia:", fallbackError);
+          }
+        });
     } catch (error) {
-      console.error('Erro geral ao copiar URL:', error);
+      console.error("Erro geral ao copiar URL:", error);
     }
   }
 
   function updateQuantidade(index: number, increment: boolean) {
-    console.log('updateQuantidade chamada:', { index, increment });
-    setIngredientesModal(prev => {
-      console.log('Estado anterior:', prev);
+    console.log("updateQuantidade chamada:", { index, increment });
+    setIngredientesModal((prev) => {
+      console.log("Estado anterior:", prev);
       const newState = prev.map((item, i) => {
         if (i === index) {
-          const newQuantity = increment ? item.quantidade + 1 : Math.max(1, item.quantidade - 1);
-          console.log('Atualizando quantidade:', { item: item.nome_ingrediente, quantidade: item.quantidade, novaQuantidade: newQuantity });
+          const newQuantity = increment
+            ? item.quantidade + 1
+            : Math.max(1, item.quantidade - 1);
+          console.log("Atualizando quantidade:", {
+            item: item.nome_ingrediente,
+            quantidade: item.quantidade,
+            novaQuantidade: newQuantity,
+          });
           return { ...item, quantidade: newQuantity };
         }
         return item;
       });
-      console.log('Novo estado:', newState);
+      console.log("Novo estado:", newState);
       return newState;
     });
   }
 
   function updateQuantidadeManual(index: number, novaQuantidade: string) {
     const quantidade = parseInt(novaQuantidade) || 1;
-    setIngredientesModal(prev => prev.map((item, i) => {
-      if (i === index) {
-        return { ...item, quantidade: Math.max(1, quantidade) };
-      }
-      return item;
-    }));
+    setIngredientesModal((prev) =>
+      prev.map((item, i) => {
+        if (i === index) {
+          return { ...item, quantidade: Math.max(1, quantidade) };
+        }
+        return item;
+      })
+    );
   }
 
   function updateUnidadeMedida(index: number, novaUnidade: string) {
-    setIngredientesModal(prev => prev.map((item, i) => {
-      if (i === index) {
-        return { ...item, unidade_medida: novaUnidade };
-      }
-      return item;
-    }));
+    setIngredientesModal((prev) =>
+      prev.map((item, i) => {
+        if (i === index) {
+          return { ...item, unidade_medida: novaUnidade };
+        }
+        return item;
+      })
+    );
   }
 
   function toggleSelecaoItem(index: number) {
-    setIngredientesModal(prev => prev.map((item, i) => {
-      if (i === index) {
-        return { ...item, selecionado: !item.selecionado };
-      }
-      return item;
-    }));
+    setIngredientesModal((prev) =>
+      prev.map((item, i) => {
+        if (i === index) {
+          return { ...item, selecionado: !item.selecionado };
+        }
+        return item;
+      })
+    );
   }
 
   function toggleSelecionarTodos() {
-    const todosSelecionados = ingredientesModal.every(ingrediente => ingrediente.selecionado);
-    setIngredientesModal(prev => prev.map(item => ({
-      ...item,
-      selecionado: !todosSelecionados
-    })));
+    const todosSelecionados = ingredientesModal.every(
+      (ingrediente) => ingrediente.selecionado
+    );
+    setIngredientesModal((prev) =>
+      prev.map((item) => ({
+        ...item,
+        selecionado: !todosSelecionados,
+      }))
+    );
   }
 
   async function adicionarALista() {
@@ -315,20 +417,22 @@ export default function Recipe() {
       // Verificar se já existe uma lista de compras para o usuário
       let listaCompras;
       try {
-        const listasResponse = await api.get('/listas_compras/');
-        const userLista = listasResponse.data.find((lista: any) => lista.id_usuario === parseInt(userId));
-        
+        const listasResponse = await api.get("/listas_compras/");
+        const userLista = listasResponse.data.find(
+          (lista: any) => lista.id_usuario === parseInt(userId)
+        );
+
         if (userLista) {
           listaCompras = userLista;
         } else {
           // Criar nova lista de compras
-          const novaListaResponse = await api.post('/listas_compras/', {
-            id_usuario: parseInt(userId)
+          const novaListaResponse = await api.post("/listas_compras/", {
+            id_usuario: parseInt(userId),
           });
           listaCompras = novaListaResponse.data;
         }
       } catch (error) {
-        console.error('Erro ao verificar/criar lista de compras:', error);
+        console.error("Erro ao verificar/criar lista de compras:", error);
         setSnackbarMessage("Erro ao acessar lista de compras");
         setSnackbarSeverity("error");
         setSnackbarOpen(true);
@@ -336,77 +440,99 @@ export default function Recipe() {
       }
 
       // Adicionar cada ingrediente selecionado à lista de compras
-      const ingredientesSelecionados = ingredientesModal.filter(ingrediente => ingrediente.selecionado);
-      
+      const ingredientesSelecionados = ingredientesModal.filter(
+        (ingrediente) => ingrediente.selecionado
+      );
+
       for (const ingrediente of ingredientesSelecionados) {
         try {
           // Buscar ou criar o ingrediente
           let ingredienteExistente;
           try {
-            const ingredientesResponse = await api.get('/ingredientes/');
-            ingredienteExistente = ingredientesResponse.data.find((ing: any) => 
-              ing.nome.toLowerCase() === ingrediente.nome_ingrediente.toLowerCase()
+            const ingredientesResponse = await api.get("/ingredientes/");
+            ingredienteExistente = ingredientesResponse.data.find(
+              (ing: any) =>
+                ing.nome.toLowerCase() ===
+                ingrediente.nome_ingrediente.toLowerCase()
             );
-            
+
             if (!ingredienteExistente) {
-              const novoIngredienteResponse = await api.post('/ingredientes/', {
-                nome: ingrediente.nome_ingrediente
+              const novoIngredienteResponse = await api.post("/ingredientes/", {
+                nome: ingrediente.nome_ingrediente,
               });
               ingredienteExistente = novoIngredienteResponse.data;
             }
           } catch (error) {
-            console.error('Erro ao buscar/criar ingrediente:', error);
+            console.error("Erro ao buscar/criar ingrediente:", error);
             continue;
           }
 
           // Verificar se já existe na lista de compras
           try {
-            const listaComprasIngredientesResponse = await api.get('/listas_compras_ingredientes/');
-            const itemExistente = listaComprasIngredientesResponse.data.find((item: any) => 
-              item.id_ingrediente === ingredienteExistente.id && 
-              item.id_lista === listaCompras.id
+            const listaComprasIngredientesResponse = await api.get(
+              "/listas_compras_ingredientes/"
+            );
+            const itemExistente = listaComprasIngredientesResponse.data.find(
+              (item: any) =>
+                item.id_ingrediente === ingredienteExistente.id &&
+                item.id_lista === listaCompras.id
             );
 
             if (itemExistente) {
               // Se já existe, somar a quantidade nova com a existente
-              const quantidadeExistente = parseFloat(itemExistente.quantidade.toString());
-              const quantidadeNova = parseFloat(ingrediente.quantidade.toString());
+              const quantidadeExistente = parseFloat(
+                itemExistente.quantidade.toString()
+              );
+              const quantidadeNova = parseFloat(
+                ingrediente.quantidade.toString()
+              );
               const quantidadeTotal = quantidadeExistente + quantidadeNova;
-              await api.put(`/listas_compras_ingredientes/${itemExistente.id}/`, {
-                id_ingrediente: ingredienteExistente.id,
-                id_lista: listaCompras.id,
-                quantidade: quantidadeTotal.toString(),
-                unidade_medida: ingrediente.unidade_medida
-              });
+              await api.put(
+                `/listas_compras_ingredientes/${itemExistente.id}/`,
+                {
+                  id_ingrediente: ingredienteExistente.id,
+                  id_lista: listaCompras.id,
+                  quantidade: quantidadeTotal.toString(),
+                  unidade_medida: ingrediente.unidade_medida,
+                }
+              );
             } else {
               // Se não existe, criar novo
-              await api.post('/listas_compras_ingredientes/', {
+              await api.post("/listas_compras_ingredientes/", {
                 id_ingrediente: ingredienteExistente.id,
                 id_lista: listaCompras.id,
                 quantidade: ingrediente.quantidade,
-                unidade_medida: ingrediente.unidade_medida
+                unidade_medida: ingrediente.unidade_medida,
               });
             }
           } catch (error) {
-            console.error('Erro ao verificar/atualizar item na lista de compras:', error);
+            console.error(
+              "Erro ao verificar/atualizar item na lista de compras:",
+              error
+            );
             // Em caso de erro na verificação, tenta criar novo
-            await api.post('/listas_compras_ingredientes/', {
+            await api.post("/listas_compras_ingredientes/", {
               id_ingrediente: ingredienteExistente.id,
               id_lista: listaCompras.id,
               quantidade: ingrediente.quantidade,
-              unidade_medida: ingrediente.unidade_medida
+              unidade_medida: ingrediente.unidade_medida,
             });
           }
         } catch (error) {
-          console.error(`Erro ao adicionar ingrediente ${ingrediente.nome_ingrediente}:`, error);
+          console.error(
+            `Erro ao adicionar ingrediente ${ingrediente.nome_ingrediente}:`,
+            error
+          );
         }
       }
-      
-      setSnackbarMessage("Ingredientes adicionados à lista de compras com sucesso!");
+
+      setSnackbarMessage(
+        "Ingredientes adicionados à lista de compras com sucesso!"
+      );
       setSnackbarSeverity("success");
       setSnackbarOpen(true);
       closeModal();
-      
+
       // Redireciona para a página de Lista de Itens
       navigate("/lista-itens");
     } catch (error) {
@@ -433,8 +559,7 @@ export default function Recipe() {
   function handleCloseSnackbar() {
     setSnackbarOpen(false);
   }
-  
-  
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
@@ -449,7 +574,7 @@ export default function Recipe() {
       </div>
     );
   }
-  
+
   if (!recipe) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
@@ -462,7 +587,8 @@ export default function Recipe() {
           Receita não encontrada
         </h1>
         <p className="mt-2 text-lg text-gray-600">
-          Desculpe, não conseguimos encontrar a receita que você está procurando.
+          Desculpe, não conseguimos encontrar a receita que você está
+          procurando.
         </p>
         <button
           onClick={() => navigate("/")}
@@ -471,8 +597,12 @@ export default function Recipe() {
             backgroundColor: "#9e000e", // Cor principal
             boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)", // Sombra
           }}
-          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#7c000b")} // Hover mais escuro
-          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#9e000e")} // Voltar ao normal
+          onMouseOver={(e) =>
+            (e.currentTarget.style.backgroundColor = "#7c000b")
+          } // Hover mais escuro
+          onMouseOut={(e) =>
+            (e.currentTarget.style.backgroundColor = "#9e000e")
+          } // Voltar ao normal
         >
           Voltar
         </button>
@@ -497,20 +627,22 @@ export default function Recipe() {
           className="max-w-md h-auto object-cover rounded-sm"
         />
       </span>
-      
+
       {/* Bloco de Ações da Receita */}
       <div className="flex flex-col gap-3 items-center">
         {/* Primeira linha - Compartilhar e Favoritar */}
         <div className="flex flex-row gap-3 justify-center">
-          <button 
+          <button
             onClick={openShareModal}
             className="flex flex-row items-center justify-center gap-3 px-4 py-3 rounded-lg border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md h-12 w-40 whitespace-nowrap"
           >
             <Share2 className="h-5 w-5 text-gray-700" />
-            <span className="text-sm font-medium text-gray-700">Compartilhar</span>
+            <span className="text-sm font-medium text-gray-700">
+              Compartilhar
+            </span>
           </button>
-          
-          <button 
+
+          <button
             onClick={handleFavorite}
             className="flex flex-row items-center justify-center gap-3 px-4 py-3 rounded-lg border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md h-12 w-40 whitespace-nowrap"
           >
@@ -523,281 +655,365 @@ export default function Recipe() {
               {isFavorite ? "Favorito" : "Favoritar"}
             </span>
           </button>
+
+          <button
+            onClick={openReportModal}
+            className="flex flex-row items-center justify-center gap-3 px-4 py-3 rounded-lg border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md h-12 w-40 whitespace-nowrap"
+          >
+            <Flag className="h-5 w-5 text-gray-700" />
+            <span className="text-sm font-medium text-gray-700">Denunciar</span>
+          </button>
         </div>
-        
+
         {/* Segunda linha - Adicionar Ingredientes */}
-        <button 
+        <button
           onClick={openModalItemList}
           className="flex flex-row items-center justify-center gap-3 px-8 py-3 rounded-lg border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md h-12 w-96 whitespace-nowrap"
         >
           <ListPlus className="h-5 w-5 text-gray-700" />
-          <span className="text-sm font-medium text-gray-700">Adicionar Ingredientes à Lista de Itens</span>
+          <span className="text-sm font-medium text-gray-700">
+            Adicionar Ingredientes à Lista de Itens
+          </span>
         </button>
       </div>
-      
+
       <div className="flex flex-row">
         <p className="font-bold">
           Dificuldade: {recipe.difficulty} | Tempo de Preparo: {recipe.time} min
         </p>
       </div>
-      
+
       <h3 className="text-lg font-semibold">Ingredientes</h3>
       <ul>{ingredientsArr}</ul>
       <h3 className="text-lg font-semibold">Modo de Preparo</h3>
       <p>{recipe.description}</p>
-      
-             {/* Modal de Ingredientes */}
-       <div className={`fixed inset-0 z-[9998] transition-all duration-150 ease-out ${
-         showModal 
-           ? 'opacity-100 pointer-events-auto' 
-           : 'opacity-0 pointer-events-none'
-       }`}>
-                   <div className={`fixed inset-0 transition-all duration-150 ease-out ${
-            showModal ? 'bg-opacity-10 backdrop-blur-sm' : 'bg-opacity-50 backdrop-blur-none'
-          }`} onClick={closeModal}></div>
-         <div className={`fixed inset-0 flex items-center justify-center transition-all duration-200 ease-out ${
-           showModal ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'
-         }`}>
-           <div className="bg-white/99 backdrop-blur-md rounded-lg p-6 w-[1000px] max-h-[80vh] overflow-y-auto shadow-2xl border border-gray-200/50 transform transition-all duration-200 ease-out">
-            {/* Header do Modal */} 
+
+      {/* Modal de Ingredientes */}
+      <div
+        className={`fixed inset-0 z-[9998] transition-all duration-150 ease-out ${
+          showModal
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
+        }`}
+      >
+        <div
+          className={`fixed inset-0 transition-all duration-150 ease-out ${
+            showModal
+              ? "bg-opacity-10 backdrop-blur-sm"
+              : "bg-opacity-50 backdrop-blur-none"
+          }`}
+          onClick={closeModal}
+        ></div>
+        <div
+          className={`fixed inset-0 flex items-center justify-center transition-all duration-200 ease-out ${
+            showModal
+              ? "scale-100 opacity-100 translate-y-0"
+              : "scale-95 opacity-0 translate-y-4"
+          }`}
+        >
+          <div className="bg-white/99 backdrop-blur-md rounded-lg p-6 w-[1000px] max-h-[80vh] overflow-y-auto shadow-2xl border border-gray-200/50 transform transition-all duration-200 ease-out">
+            {/* Header do Modal */}
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold" style={{ color: "#9e000e" }}>
                 Ingredientes da Receita
               </h2>
-                             <button
-                 onClick={closeModal}
-                 disabled={isAddingToList}
-                 className={`text-gray-500 transition-colors cursor-pointer ${
-                   isAddingToList 
-                     ? 'opacity-50 cursor-not-allowed' 
-                     : 'hover:text-gray-700'
-                 }`}
-               >
-                 <X className="h-6 w-6" />
-               </button>
+              <button
+                onClick={closeModal}
+                disabled={isAddingToList}
+                className={`text-gray-500 transition-colors cursor-pointer ${
+                  isAddingToList
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:text-gray-700"
+                }`}
+              >
+                <X className="h-6 w-6" />
+              </button>
             </div>
 
             {/* Lista de Ingredientes */}
             <div className="space-y-3 mb-6">
-                             {/* Cabeçalho das Colunas */}
-               <div className="grid grid-cols-12 gap-4 items-center p-3 border-b border-gray-300 bg-gray-100 rounded-t-lg">
-                 <div className="col-span-6">
-                   <p className="font-semibold text-gray-700 text-sm">Ingrediente</p>
-                 </div>
-                 <div className="col-span-4 text-center">
-                   <p className="font-semibold text-gray-700 text-sm">Quantidade & Unidade</p>
-                 </div>
-                 <div className="col-span-2 text-center">
-                   <div className="flex items-center justify-center space-x-2">
-                     <button
-                       onClick={toggleSelecionarTodos}
-                       disabled={isAddingToList}
-                       className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-100 ease-out flex-shrink-0 ${
-                         isAddingToList 
-                           ? 'cursor-not-allowed opacity-50' 
-                           : 'cursor-pointer hover:scale-105 active:scale-95'
-                       }`}
-                       style={{
-                         backgroundColor: ingredientesModal.every(ing => ing.selecionado) ? "#dc2626" : "#e5e7eb",
-                         color: ingredientesModal.every(ing => ing.selecionado) ? "white" : "#6b7280"
-                       }}
-                       onMouseOver={(e) => {
-                         if (!isAddingToList) {
-                           if (ingredientesModal.every(ing => ing.selecionado)) {
-                             e.currentTarget.style.backgroundColor = "#b91c1c";
-                           } else {
-                             e.currentTarget.style.backgroundColor = "#d1d5db";
-                           }
-                         }
-                       }}
-                       onMouseOut={(e) => {
-                         if (!isAddingToList) {
-                           if (ingredientesModal.every(ing => ing.selecionado)) {
-                             e.currentTarget.style.backgroundColor = "#dc2626";
-                           } else {
-                             e.currentTarget.style.backgroundColor = "#e5e7eb";
-                           }
-                         }
-                       }}
-                       title={isAddingToList ? "Adicionando itens..." : (ingredientesModal.every(ing => ing.selecionado) ? "Desmarcar todos" : "Marcar todos")}
-                     >
-                       {ingredientesModal.every(ing => ing.selecionado) ? (
-                         <Check className="h-3 w-3" />
-                       ) : (
-                         <div className="w-2 h-2 border-2 border-gray-400 rounded-sm"></div>
-                       )}
-                     </button>
-                     <p className="font-semibold text-gray-700 text-sm">Selecionar</p>
-                   </div>
-                 </div>
-               </div>
-              
-              {ingredientesModal.map((ingrediente, index) => (
-                                     <div
-                     key={ingrediente.id}
-                     className={`grid grid-cols-12 gap-4 items-center p-4 border border-gray-200 rounded-lg transition-all duration-200 ${
-                       ingrediente.selecionado ? 'bg-gray-50 opacity-100' : 'bg-gray-100 opacity-50'
-                     }`}
-                   >
-                     {/* Nome do Ingrediente - Ocupa 6 colunas */}
-                     <div className="col-span-6">
-                       <p className="font-medium text-gray-800 text-sm">
-                         {ingrediente.nome_ingrediente}
-                       </p>
-                     </div>
-                     
-                     {/* Controles de Quantidade - Ocupam 4 colunas */}
-                     <div className="col-span-4 flex items-center justify-center space-x-2">
-                       <button
-                         onClick={() => updateQuantidade(index, false)}
-                         disabled={isAddingToList}
-                         className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-100 ease-out flex-shrink-0 cursor-pointer hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                         style={{
-                           backgroundColor: "#9e000e",
-                           color: "white"
-                         }}
-                         onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#7c000b")}
-                         onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#9e000e")}
-                       >
-                         <Minus className="h-4 w-4" />
-                       </button>
-                       
-                       <input
-                         type="number"
-                         min="1"
-                         value={ingrediente.quantidade}
-                         onChange={(e) => updateQuantidadeManual(index, e.target.value)}
-                         disabled={isAddingToList}
-                         className="w-20 text-center font-semibold text-gray-700 border border-gray-300 rounded py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
-                         style={{ paddingLeft: '0', paddingRight: '0' }}
-                       />
-                       
-                       <button
-                         onClick={() => updateQuantidade(index, true)}
-                         disabled={isAddingToList}
-                         className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-100 ease-out flex-shrink-0 cursor-pointer hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                         style={{
-                           backgroundColor: "#9e000e",
-                           color: "white"
-                         }}
-                         onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#7c000b")}
-                         onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#9e000e")}
-                         >
-                         <Plus className="h-4 w-4" />
-                       </button>
-                       
-                       <Select
-                         value={{ value: ingrediente.unidade_medida, label: ingrediente.unidade_medida }}
-                         onChange={(option) => updateUnidadeMedida(index, option?.value || ingrediente.unidade_medida)}
-                         options={UNIDADES_MEDIDA_OPTIONS}
-                         isDisabled={isAddingToList}
-                         styles={{
-                           ...selectStyles,
-                           menuPortal: (base) => ({
-                             ...base,
-                             zIndex: 9999,
-                           }),
-                           menu: (base) => ({
-                             ...base,
-                             zIndex: 9999,
-                           }),
-                         }}
-                         className="w-32"
-                         classNamePrefix="select"
-                         isSearchable={false}
-                         menuPlacement="auto"
-                         menuPosition="fixed"
-                         menuPortalTarget={document.body}
-                       />
-                     </div>
-
-                     {/* Checkbox de Seleção - Ocupa 2 colunas */}
-                     <div className="col-span-2 flex justify-center">
-                       <button
-                         onClick={() => toggleSelecaoItem(index)}
-                         disabled={isAddingToList}
-                         className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-100 ease-out hover:scale-105 active:scale-95 flex-shrink-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                         style={{
-                           backgroundColor: ingrediente.selecionado ? "#dc2626" : "#e5e7eb",
-                           color: ingrediente.selecionado ? "white" : "#6b7280"
-                         }}
-                         onMouseOver={(e) => {
-                           if (ingrediente.selecionado) {
-                             e.currentTarget.style.backgroundColor = "#b91c1c";
-                           } else {
-                             e.currentTarget.style.backgroundColor = "#d1d5db";
-                           }
-                         }}
-                         onMouseOut={(e) => {
-                           if (ingrediente.selecionado) {
-                             e.currentTarget.style.backgroundColor = "#dc2626";
-                           } else {
-                             e.currentTarget.style.backgroundColor = "#e5e7eb";
-                           }
-                         }}
-                         title={ingrediente.selecionado ? "Desmarcar ingrediente" : "Marcar ingrediente"}
-                       >
-                         {ingrediente.selecionado ? (
-                           <Check className="h-4 w-4" />
-                         ) : (
-                           <div className="w-3 h-3 border-2 border-gray-400 rounded-sm"></div>
-                         )}
-                       </button>
-                     </div>
-                   </div>
-                ))}
+              {/* Cabeçalho das Colunas */}
+              <div className="grid grid-cols-12 gap-4 items-center p-3 border-b border-gray-300 bg-gray-100 rounded-t-lg">
+                <div className="col-span-6">
+                  <p className="font-semibold text-gray-700 text-sm">
+                    Ingrediente
+                  </p>
+                </div>
+                <div className="col-span-4 text-center">
+                  <p className="font-semibold text-gray-700 text-sm">
+                    Quantidade & Unidade
+                  </p>
+                </div>
+                <div className="col-span-2 text-center">
+                  <div className="flex items-center justify-center space-x-2">
+                    <button
+                      onClick={toggleSelecionarTodos}
+                      disabled={isAddingToList}
+                      className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-100 ease-out flex-shrink-0 ${
+                        isAddingToList
+                          ? "cursor-not-allowed opacity-50"
+                          : "cursor-pointer hover:scale-105 active:scale-95"
+                      }`}
+                      style={{
+                        backgroundColor: ingredientesModal.every(
+                          (ing) => ing.selecionado
+                        )
+                          ? "#dc2626"
+                          : "#e5e7eb",
+                        color: ingredientesModal.every((ing) => ing.selecionado)
+                          ? "white"
+                          : "#6b7280",
+                      }}
+                      onMouseOver={(e) => {
+                        if (!isAddingToList) {
+                          if (
+                            ingredientesModal.every((ing) => ing.selecionado)
+                          ) {
+                            e.currentTarget.style.backgroundColor = "#b91c1c";
+                          } else {
+                            e.currentTarget.style.backgroundColor = "#d1d5db";
+                          }
+                        }
+                      }}
+                      onMouseOut={(e) => {
+                        if (!isAddingToList) {
+                          if (
+                            ingredientesModal.every((ing) => ing.selecionado)
+                          ) {
+                            e.currentTarget.style.backgroundColor = "#dc2626";
+                          } else {
+                            e.currentTarget.style.backgroundColor = "#e5e7eb";
+                          }
+                        }
+                      }}
+                      title={
+                        isAddingToList
+                          ? "Adicionando itens..."
+                          : ingredientesModal.every((ing) => ing.selecionado)
+                          ? "Desmarcar todos"
+                          : "Marcar todos"
+                      }
+                    >
+                      {ingredientesModal.every((ing) => ing.selecionado) ? (
+                        <Check className="h-3 w-3" />
+                      ) : (
+                        <div className="w-2 h-2 border-2 border-gray-400 rounded-sm"></div>
+                      )}
+                    </button>
+                    <p className="font-semibold text-gray-700 text-sm">
+                      Selecionar
+                    </p>
+                  </div>
+                </div>
               </div>
-            
 
-                         {/* Botão Adicionar */}
-             <div className="flex justify-end">
-               <button
-                 onClick={adicionarALista}
-                 disabled={ingredientesModal.filter(ing => ing.selecionado).length === 0 || isAddingToList}
-                 className="px-6 py-2 text-white font-semibold rounded-md shadow-md transition-all duration-150 ease-out transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                 style={{
-                   backgroundColor: "#9e000e",
-                   boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)"
-                 }}
-                 onMouseOver={(e) => {
-                   if (!e.currentTarget.disabled) {
-                     e.currentTarget.style.backgroundColor = "#7c000b";
-                   }
-                 }}
-                 onMouseOut={(e) => {
-                   if (!e.currentTarget.disabled) {
-                     e.currentTarget.style.backgroundColor = "#9e000e";
-                   }
-                 }}
-               >
-                 {isAddingToList ? (
-                   <>
-                     <CircularProgress size={16} style={{ color: 'white' }} />
-                     <span>Adicionando...</span>
-                   </>
-                 ) : (
-                   `Adicionar ${ingredientesModal.filter(ing => ing.selecionado).length} Item(s) à Lista de Itens`
-                 )}
-               </button>
-             </div>
-           </div>
-         </div>
-       </div>
+              {ingredientesModal.map((ingrediente, index) => (
+                <div
+                  key={ingrediente.id}
+                  className={`grid grid-cols-12 gap-4 items-center p-4 border border-gray-200 rounded-lg transition-all duration-200 ${
+                    ingrediente.selecionado
+                      ? "bg-gray-50 opacity-100"
+                      : "bg-gray-100 opacity-50"
+                  }`}
+                >
+                  {/* Nome do Ingrediente - Ocupa 6 colunas */}
+                  <div className="col-span-6">
+                    <p className="font-medium text-gray-800 text-sm">
+                      {ingrediente.nome_ingrediente}
+                    </p>
+                  </div>
+
+                  {/* Controles de Quantidade - Ocupam 4 colunas */}
+                  <div className="col-span-4 flex items-center justify-center space-x-2">
+                    <button
+                      onClick={() => updateQuantidade(index, false)}
+                      disabled={isAddingToList}
+                      className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-100 ease-out flex-shrink-0 cursor-pointer hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{
+                        backgroundColor: "#9e000e",
+                        color: "white",
+                      }}
+                      onMouseOver={(e) =>
+                        (e.currentTarget.style.backgroundColor = "#7c000b")
+                      }
+                      onMouseOut={(e) =>
+                        (e.currentTarget.style.backgroundColor = "#9e000e")
+                      }
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+
+                    <input
+                      type="number"
+                      min="1"
+                      value={ingrediente.quantidade}
+                      onChange={(e) =>
+                        updateQuantidadeManual(index, e.target.value)
+                      }
+                      disabled={isAddingToList}
+                      className="w-20 text-center font-semibold text-gray-700 border border-gray-300 rounded py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ paddingLeft: "0", paddingRight: "0" }}
+                    />
+
+                    <button
+                      onClick={() => updateQuantidade(index, true)}
+                      disabled={isAddingToList}
+                      className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-100 ease-out flex-shrink-0 cursor-pointer hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{
+                        backgroundColor: "#9e000e",
+                        color: "white",
+                      }}
+                      onMouseOver={(e) =>
+                        (e.currentTarget.style.backgroundColor = "#7c000b")
+                      }
+                      onMouseOut={(e) =>
+                        (e.currentTarget.style.backgroundColor = "#9e000e")
+                      }
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+
+                    <Select
+                      value={{
+                        value: ingrediente.unidade_medida,
+                        label: ingrediente.unidade_medida,
+                      }}
+                      onChange={(option) =>
+                        updateUnidadeMedida(
+                          index,
+                          option?.value || ingrediente.unidade_medida
+                        )
+                      }
+                      options={UNIDADES_MEDIDA_OPTIONS}
+                      isDisabled={isAddingToList}
+                      styles={{
+                        ...selectStyles,
+                        menuPortal: (base) => ({
+                          ...base,
+                          zIndex: 9999,
+                        }),
+                        menu: (base) => ({
+                          ...base,
+                          zIndex: 9999,
+                        }),
+                      }}
+                      className="w-32"
+                      classNamePrefix="select"
+                      isSearchable={false}
+                      menuPlacement="auto"
+                      menuPosition="fixed"
+                      menuPortalTarget={document.body}
+                    />
+                  </div>
+
+                  {/* Checkbox de Seleção - Ocupa 2 colunas */}
+                  <div className="col-span-2 flex justify-center">
+                    <button
+                      onClick={() => toggleSelecaoItem(index)}
+                      disabled={isAddingToList}
+                      className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-100 ease-out hover:scale-105 active:scale-95 flex-shrink-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{
+                        backgroundColor: ingrediente.selecionado
+                          ? "#dc2626"
+                          : "#e5e7eb",
+                        color: ingrediente.selecionado ? "white" : "#6b7280",
+                      }}
+                      onMouseOver={(e) => {
+                        if (ingrediente.selecionado) {
+                          e.currentTarget.style.backgroundColor = "#b91c1c";
+                        } else {
+                          e.currentTarget.style.backgroundColor = "#d1d5db";
+                        }
+                      }}
+                      onMouseOut={(e) => {
+                        if (ingrediente.selecionado) {
+                          e.currentTarget.style.backgroundColor = "#dc2626";
+                        } else {
+                          e.currentTarget.style.backgroundColor = "#e5e7eb";
+                        }
+                      }}
+                      title={
+                        ingrediente.selecionado
+                          ? "Desmarcar ingrediente"
+                          : "Marcar ingrediente"
+                      }
+                    >
+                      {ingrediente.selecionado ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <div className="w-3 h-3 border-2 border-gray-400 rounded-sm"></div>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Botão Adicionar */}
+            <div className="flex justify-end">
+              <button
+                onClick={adicionarALista}
+                disabled={
+                  ingredientesModal.filter((ing) => ing.selecionado).length ===
+                    0 || isAddingToList
+                }
+                className="px-6 py-2 text-white font-semibold rounded-md shadow-md transition-all duration-150 ease-out transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                style={{
+                  backgroundColor: "#9e000e",
+                  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                }}
+                onMouseOver={(e) => {
+                  if (!e.currentTarget.disabled) {
+                    e.currentTarget.style.backgroundColor = "#7c000b";
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (!e.currentTarget.disabled) {
+                    e.currentTarget.style.backgroundColor = "#9e000e";
+                  }
+                }}
+              >
+                {isAddingToList ? (
+                  <>
+                    <CircularProgress size={16} style={{ color: "white" }} />
+                    <span>Adicionando...</span>
+                  </>
+                ) : (
+                  `Adicionar ${
+                    ingredientesModal.filter((ing) => ing.selecionado).length
+                  } Item(s) à Lista de Itens`
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Modal de Compartilhamento */}
-      <div className={`fixed inset-0 z-[9999] transition-all duration-150 ease-out modal-overlay ${
-        showShareModal 
-          ? 'opacity-100 pointer-events-auto' 
-          : 'opacity-0 pointer-events-none'
-      }`}>
-        <div className={`fixed inset-0 transition-all duration-150 ease-out ${
-          showShareModal ? 'bg-opacity-10 backdrop-blur-sm' : 'bg-opacity-50 backdrop-blur-none'
-        }`} onClick={closeShareModal}></div>
-        <div className={`fixed inset-0 flex items-center justify-center transition-all duration-200 ease-out ${
-          showShareModal ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'
-        }`}>
+      <div
+        className={`fixed inset-0 z-[9999] transition-all duration-150 ease-out modal-overlay ${
+          showShareModal
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
+        }`}
+      >
+        <div
+          className={`fixed inset-0 transition-all duration-150 ease-out ${
+            showShareModal
+              ? "bg-opacity-10 backdrop-blur-sm"
+              : "bg-opacity-50 backdrop-blur-none"
+          }`}
+          onClick={closeShareModal}
+        ></div>
+        <div
+          className={`fixed inset-0 flex items-center justify-center transition-all duration-200 ease-out ${
+            showShareModal
+              ? "scale-100 opacity-100 translate-y-0"
+              : "scale-95 opacity-0 translate-y-4"
+          }`}
+        >
           <div className="bg-white/99 backdrop-blur-md rounded-lg p-6 w-[400px] max-h-[80vh] overflow-y-auto shadow-2xl border border-gray-200/50 transform transition-all duration-200 ease-out">
-            {/* Header do Modal */} 
+            {/* Header do Modal */}
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold" style={{ color: "#9e000e" }}>
                 Compartilhar Receita
@@ -813,9 +1029,10 @@ export default function Recipe() {
             {/* Conteúdo do Modal */}
             <div className="space-y-4">
               <p className="text-gray-600 text-sm">
-                Compartilhe esta receita de {recipe.title} com seus amigos copiando o link abaixo:
+                Compartilhe esta receita de {recipe.title} com seus amigos
+                copiando o link abaixo:
               </p>
-              
+
               <div className="bg-gray-100 p-3 rounded-lg border border-gray-200">
                 <p className="text-sm text-gray-700 break-all">
                   {window.location.href}
@@ -840,16 +1057,113 @@ export default function Recipe() {
         </div>
       </div>
 
+      {/* Modal de Denúncia */}
+      <div
+        className={`fixed inset-0 z-[9999] transition-all duration-150 ease-out ${
+          showReportModal
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
+        }`}
+      >
+        <div
+          className={`fixed inset-0 transition-all duration-150 ease-out ${
+            showReportModal
+              ? "bg-opacity-10 backdrop-blur-sm"
+              : "bg-opacity-50 backdrop-blur-none"
+          }`}
+          onClick={closeReportModal}
+        ></div>
+
+        <div
+          className={`fixed inset-0 flex items-center justify-center transition-all duration-200 ease-out ${
+            showReportModal
+              ? "scale-100 opacity-100 translate-y-0"
+              : "scale-95 opacity-0 translate-y-4"
+          }`}
+        >
+          <div className="bg-white/99 backdrop-blur-md rounded-lg p-6 w-[500px] max-h-[80vh] overflow-y-auto shadow-2xl border border-gray-200/50 transform transition-all duration-200 ease-out">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold" style={{ color: "#9e000e" }}>
+                Denunciar Receita
+              </h2>
+              <button
+                onClick={closeReportModal}
+                className="text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            {/* Campos */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Motivo da denúncia
+                </label>
+                <Select
+                  value={reportReason}
+                  onChange={(option) => setReportReason(option)}
+                  options={REPORT_OPTIONS}
+                  styles={selectStyles}
+                  placeholder="Selecione um motivo"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Detalhamento
+                </label>
+                <textarea
+                  value={reportDetail}
+                  onChange={(e) => setReportDetail(e.target.value)}
+                  rows={4}
+                  className="w-full border border-gray-300 rounded-md p-2 text-gray-700 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  placeholder="Descreva melhor a denúncia..."
+                />
+              </div>
+            </div>
+
+            {/* Botões */}
+            <div className="flex justify-end mt-6 gap-3">
+              <button
+                onClick={closeReportModal}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={submitReport}
+                className="px-4 py-2 text-white font-semibold rounded-md transition-colors"
+                style={{ backgroundColor: "#9e000e" }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = "#7c000b";
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = "#9e000e";
+                }}
+              >
+                Enviar denúncia
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Popup de Login */}
       {showLoginPopup && (
         <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[99999]">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <div className="text-center">
-              <h3 className="text-lg font-semibold mb-4" style={{ color: "#9e000e" }}>
+              <h3
+                className="text-lg font-semibold mb-4"
+                style={{ color: "#9e000e" }}
+              >
                 Função Restrita
               </h3>
               <p className="text-gray-600 mb-6">
-                Esta função é apenas para usuários cadastrados. Faça login para continuar.
+                Esta função é apenas para usuários cadastrados. Faça login para
+                continuar.
               </p>
               <div className="flex gap-3 justify-center">
                 <button
@@ -898,31 +1212,36 @@ export default function Recipe() {
 
 function converterHoraParaMinutos(hora: string): number {
   try {
-    if (!hora || typeof hora !== 'string') {
-      console.warn('Hora inválida fornecida:', hora);
+    if (!hora || typeof hora !== "string") {
+      console.warn("Hora inválida fornecida:", hora);
       return 0;
     }
 
     const partes = hora.split(":");
-    
+
     if (partes.length < 2) {
-      console.warn('Formato de hora inválido:', hora);
+      console.warn("Formato de hora inválido:", hora);
       return 0;
     }
 
     const horas = parseInt(partes[0], 10);
     const minutos = parseInt(partes[1], 10);
     const segundos = partes[2] ? parseInt(partes[2], 10) : 0;
-    
+
     if (isNaN(horas) || isNaN(minutos) || isNaN(segundos)) {
-      console.warn('Valores de hora inválidos:', { horas, minutos, segundos });
+      console.warn("Valores de hora inválidos:", { horas, minutos, segundos });
       return 0;
     }
-    
+
     const totalMinutos = horas * 60 + minutos + Math.round(segundos / 60);
     return Math.max(0, totalMinutos); // Garante que não seja negativo
   } catch (error) {
-    console.error('Erro ao converter hora para minutos:', error, 'Hora fornecida:', hora);
+    console.error(
+      "Erro ao converter hora para minutos:",
+      error,
+      "Hora fornecida:",
+      hora
+    );
     return 0;
   }
 }
