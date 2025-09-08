@@ -2,7 +2,7 @@ import axios from "axios";
 
 const getBaseURL = () => {
   if (import.meta.env.PROD) {
-    return 'https://back-kitem-e12u.onrender.com';
+    return 'https://back-kitem-e12u.onrender.com/api';
   }
   return '/api';
 };
