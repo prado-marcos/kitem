@@ -37,6 +37,11 @@ O sistema foi desenvolvido como uma solução prática para quem gosta de cozinh
 - Gerenciamento interativo de itens
 - Organização e facilitação
 
+### **Denúncia**
+- Permite que usuários registrem uma denuncia em relação a conteudo inadequado para a plataforma
+- Botão de denúncia encontrado nas páginas de receitas
+
+
 ## 🛠️ **Tecnologias**
 
 - **React 19** - Interface de usuário
